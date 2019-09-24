@@ -1,0 +1,7 @@
+Sinjun Jang (srjang)
+None
+1. I used sinjun-Razer-Blade, my laptop.
+2. I read manual page 1. I learned that there is actualy a lot of commands that I did not know about concerning about UNIX. One thing in particular that seems useful is the debugging option -d, or --debug.
+3. I use VIM and Atom currently though I am not yet loyal to either one. I want to get better at using VIM because I know how fast you can edit using it. 
+4. My program is supposed to print "Hello World." The only problem I encountered was not adding "#include<stdio.h>" at the beginning of my program. I was able to solve it by listening to the error warnings I got after failing to compile.
+This one program took way longer than I thought it was going to.
