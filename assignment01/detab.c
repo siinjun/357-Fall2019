@@ -6,8 +6,6 @@ void detab()
 
     int ch_count = 0;
     int ch = getchar();
-    int mod = 16%8;
-    printf("The mod of 8 and 8 is %d \n", mod);
 
     while (ch != EOF) /*while not end of file*/
     {
