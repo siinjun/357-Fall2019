@@ -20,8 +20,8 @@ void detab()
             ch_count = 0;
 
         }
-
-        else if (ch == '\n' || ch == '\r') /*if current char is newline, reset count to 0*/
+        /*if current char is newline, reset count to 0*/
+        else if (ch == '\n' || ch == '\r') 
         {
             ch_count = 0;
             putchar(ch);
@@ -57,4 +57,4 @@ int main ()
     detab();
 
     return 0;
-
+}
