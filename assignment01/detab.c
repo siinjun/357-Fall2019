@@ -4,16 +4,16 @@
 void detab()
 {
 
-    int ch_count = 0;
+    int ch_count = 0; /*counter for tabstop*/
     int ch = getchar();
-    int beginning_of_line = 0;
+    int position_of_line = 0; /*tracks position of each line*/
 
     while (ch != EOF) /*while not end of file*/
     {
 
         if (ch == '\t') /* if current char is tab, add spaces until tabstop*/
         {
-            for (;ch_count < TABSTOP; ch_count++, beginning_of_line++)
+            for (;ch_count < TABSTOP; ch_count++, position_of_line++)
             {
                 putchar(' ');
             }
@@ -25,14 +25,14 @@ void detab()
         {
             ch_count = 0;
             putchar(ch);
-            beginning_of_line = 0;
+            position_of_line = 0;
         }
 
         else if (ch == '\b') /*if current char is backspace, decrement count*/
         {
-            if (beginning_of_line != 0)
+            if (position_of_line != 0)
             {
-            beginning_of_line--;
+            position_of_line--;
             ch_count--;
             }
             
@@ -43,7 +43,7 @@ void detab()
  
         else /*print all normal characters*/
         {
-            beginning_of_line++;
+            position_of_line++;
             ch_count++;
             putchar(ch);
         }
