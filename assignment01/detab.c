@@ -34,8 +34,11 @@ void detab()
             {
             beginning_of_line--;
             ch_count--;
-            putchar(ch);
             }
+            
+            putchar(ch);
+            while (ch_count < 0)
+                ch_count += TABSTOP; /*resets counter to valid position*/
         }
  
         else /*print all normal characters*/
