@@ -1,0 +1,16 @@
+1. a) char *cp;
+   b) char[] *ap;
+   c) int *pp;
+
+2. 
+
+3. 
+
+4. a) Arrays are the same as pointers in the same way you can access elements of an array by incrementing both the array or pointer.
+   b)
+
+5.
+
+6.
+
+7.
