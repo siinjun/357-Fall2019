@@ -2,15 +2,17 @@
    b) char[] *ap;
    c) int *pp;
 
-2. 
+2. A pointer can point to its own memory address. To do so you initialize it lie this.
+int *a;
+a = (int*)&a;
 
-3. 
+3. The fundamental problem with this code is the pointer is not being dereferenced when comparing it to '\0'. When this code is executed, it will continue outputting characrers until the pointer runs out of memory. To fix this, change the code to say "*p != '\0'" instead of "p != '\0'".
 
 4. a) Arrays are the same as pointers in the same way you can access elements of an array by incrementing both the array or pointer.
    b)
 
-5.
+5. The perror argument is defined with the ISO C attribute const so that the function change the the argument placed in the function. This means that a string literal can be passed into the argument and the user doesn't need to worry if the value will be changed. The integer argument sterror is not defined with const because the value for strerror is usually the errno value and maps the argument into an error message string.
 
-6.
+6. In 68 years from now, the clock will overflow in the year 2087.
 
-7.
+7. size_t is actully an unsigned integer type and it is located in the header file stdio.h

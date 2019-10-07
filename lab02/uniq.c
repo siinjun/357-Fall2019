@@ -23,6 +23,7 @@ void *safe_malloc(size_t size) {
 
 char *read_long_line(FILE *file) {
     char *lineptr = NULL;
+    char *lasttmp = NULL;
     size_t bufflen = 0;
     size_t size = SIZE;
     char ch;
@@ -44,13 +45,22 @@ char *read_long_line(FILE *file) {
         }
 
     }
-    lineptr[bufflen] = 0;
+    /*add zero char to end*/
+    lineptr[bufflen] = '\0';
 
     if (bufflen == 0 && ch ==EOF){
         free(lineptr);
-        lineptr = NULL;
+        return NULL;
     }
-    
+    /*tmp pointer for lineptr before reallocing to size of string*/
+    lasttmp = realloc(lineptr, bufflen + 1);
+
+    if (!lasttmp) {
+        perror("realloc failed line at end of read_long_line");
+        exit(EXIT_FAILURE);
+    }
+
+    lineptr = lasttmp;
     return lineptr;
 }
 
