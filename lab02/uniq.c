@@ -72,6 +72,7 @@ int main(int argc, char **argv) {
     char *filename;
     char *line;
     char **all_lines;
+    char *prev_line = NULL;
     size_t pointer_buffer = 0;
     size_t size_double_pointer = POINTER;
 
@@ -88,8 +89,9 @@ int main(int argc, char **argv) {
     all_lines = safe_malloc(size_double_pointer);
 
     i = 0;
+    
+    /*
     while ((line = read_long_line(fp))){
-        /*cmp line with other lines*/
         if (i > 0){
             int repeat = 0;
             int j;
@@ -107,7 +109,6 @@ int main(int argc, char **argv) {
                         perror("realloc, no mem left");
                         exit(EXIT_FAILURE);
                     }
-                    /*re allocating worked if reached*/
                     all_lines = tmp;
                     size_double_pointer *= 2;
 
@@ -121,15 +122,35 @@ int main(int argc, char **argv) {
             all_lines[i] = line;
             i++;
         }
+    }*/
+
+    while((line = read_long_line(fp))){
+
+        if (!prev_line){
+            size_t size = strlen(line);
+            prev_line = safe_malloc(size);
+            prev_line = line;
+            printf("%s", line);
+        }
+        else{
+            if(!strcmp(prev_line, line)){
+                printf("%s", line);
+                free(prev_line);
+                size_t size = strlen(line);
+                prev_line = safe_malloc(size);
+                prev_line = line;
+            }
+        }
     }
 
     k = 0;
-
+    /*
     while(k < i){
         printf("%s\n", all_lines[k]);
         free(all_lines[k]);
         k++;
     }
+    */
     free(all_lines);
     fclose(fp);
 
