@@ -67,13 +67,9 @@ char *read_long_line(FILE *file) {
 int main(int argc, char **argv) {
 
     FILE *fp;
-    int i;
-    int k;
     char *filename;
     char *line;
-    char **all_lines;
-    char *prev_line = NULL;
-    size_t pointer_buffer = 0;
+    char **prev_line = NULL;
     size_t size_double_pointer = POINTER;
 
     filename = argv[1];
@@ -85,10 +81,6 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    all_lines = NULL;
-    all_lines = safe_malloc(size_double_pointer);
-
-    i = 0;
     
     /*
     while ((line = read_long_line(fp))){
@@ -124,34 +116,31 @@ int main(int argc, char **argv) {
         }
     }*/
 
+    prev_line = safe_malloc(size_double_pointer);
+
     while((line = read_long_line(fp))){
 
-        if (!prev_line){
-            size_t size = strlen(line);
-            prev_line = safe_malloc(size);
-            prev_line = line;
-            printf("%s", line);
+        if (!prev_line[0]){
+            prev_line[0] = line;
+            printf("%s\n", line);
         }
         else{
-            if(!strcmp(prev_line, line)){
-                printf("%s", line);
-                free(prev_line);
-                size_t size = strlen(line);
-                prev_line = safe_malloc(size);
-                prev_line = line;
+            if(strcmp(prev_line[0], line)){
+                printf("%s\n", line);
+                free(prev_line[0]);
+                prev_line[0] = line;
             }
         }
     }
 
-    k = 0;
     /*
     while(k < i){
         printf("%s\n", all_lines[k]);
         free(all_lines[k]);
         k++;
     }
-    */
-    free(all_lines);
+
+    free(all_lines);*/
     fclose(fp);
 
     return 0;
