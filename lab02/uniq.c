@@ -67,9 +67,12 @@ char *read_long_line(FILE *file) {
 int main(int argc, char **argv) {
 
     FILE *fp;
+    int i;
+    int k;
     char *filename;
     char *line;
-    char **prev_line = NULL;
+    char **all_lines;
+    size_t pointer_buffer = 0;
     size_t size_double_pointer = POINTER;
 
     filename = argv[1];
@@ -81,18 +84,18 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    
-    /*
+    all_lines = NULL;
+    all_lines = safe_malloc(size_double_pointer);
+
+    i = 0;
     while ((line = read_long_line(fp))){
+        /*cmp line with other lines*/
         if (i > 0){
             int repeat = 0;
-            int j;
-            for(j = 0; j < i; j++){
-                if (strcmp(line, all_lines[j]) == 0){
+                if (strcmp(line, all_lines[i-1]) == 0){
                     repeat = 1;
                 }
 
-            }
             if (repeat==0){
                 pointer_buffer += 8;
                 if (pointer_buffer >= size_double_pointer){
@@ -101,6 +104,7 @@ int main(int argc, char **argv) {
                         perror("realloc, no mem left");
                         exit(EXIT_FAILURE);
                     }
+                    /*re allocating worked if reached*/
                     all_lines = tmp;
                     size_double_pointer *= 2;
 
@@ -114,33 +118,16 @@ int main(int argc, char **argv) {
             all_lines[i] = line;
             i++;
         }
-    }*/
-
-    prev_line = safe_malloc(size_double_pointer);
-
-    while((line = read_long_line(fp))){
-
-        if (!prev_line[0]){
-            prev_line[0] = line;
-            printf("%s\n", line);
-        }
-        else{
-            if(strcmp(prev_line[0], line)){
-                printf("%s\n", line);
-                free(prev_line[0]);
-                prev_line[0] = line;
-            }
-        }
     }
 
-    /*
+    k = 0;
+
     while(k < i){
         printf("%s\n", all_lines[k]);
         free(all_lines[k]);
         k++;
     }
-
-    free(all_lines);*/
+    free(all_lines);
     fclose(fp);
 
     return 0;
