@@ -103,6 +103,7 @@ HashTable *resize(HashTable *ht){
     }
     /*free the old hashtable*/
     free(old);
+    free(old->array);
     return new;
 }
 

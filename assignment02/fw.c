@@ -120,6 +120,11 @@ int main(int argc, char **argv){
     int max_num = 10;
     int i = 1;
     int j;
+    int k;
+    int outputted = 0;
+    int largest;
+    Index most_appeared;
+    Index tmp;
     /*initialize hashtable*/
     ht = create_ht(5);
     
@@ -141,9 +146,50 @@ int main(int argc, char **argv){
     /*if no args, get words from stdin*/
     else{
     }
-    for(j = 0; j < ht->size; j++){
-        if (ht->array[j].word)
-            printf("%s at index %d\n", ht->array[j].word, j);
+    while(outputted < max_num){
+
+        if(outputted == ht->items){
+            break;
+        }
+        most_appeared.word = NULL;
+        most_appeared.appearances = 0;
+        for(j = 0; j < ht->size; j++){
+            tmp = ht->array[j];
+            if (!most_appeared.word && tmp.word){
+                most_appeared = tmp;
+                largest = j;
+            }
+            else if(most_appeared.appearances < tmp.appearances){
+                most_appeared = tmp;
+                largest = j;
+            }
+            else if(most_appeared.appearances == tmp.appearances){
+                int most = strlen(most_appeared.word);
+                int curr = strlen(tmp.word);
+                if (curr < most){
+                    most_appeared = tmp;
+                    largest = j;
+                }
+                else if (curr == most){
+                    int cmp = strcmp(most_appeared.word, tmp.word);
+                    if (cmp > 0){
+                        most_appeared = tmp;
+                        largest = j;
+                    }
+
+                }
+            }
+
+        }
+        printf("%s %ld\n", most_appeared.word, most_appeared.appearances);
+        free(ht->array[largest].word);
+        ht->array[largest].appearances = 0;
+        outputted++;
     }
+    for(k = 0; k < ht->size; k++){
+        free(ht->array[k].word);
+    }
+    free(ht->array);
+    free(ht);
     return 0;
 }
