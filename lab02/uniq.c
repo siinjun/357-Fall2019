@@ -31,7 +31,7 @@ char *read_long_line(FILE *file) {
     lineptr = safe_malloc(size);
 
     while((ch = fgetc(file)) != '\n' && ch != EOF) {
-        lineptr[bufflen++] = ch;
+        lineptr[bufflen] = ch;
 
         if (bufflen + 1 >= size) {
             char *tmp = realloc(lineptr, size * 2);
@@ -43,6 +43,7 @@ char *read_long_line(FILE *file) {
         lineptr = tmp;
         size *= 2;
         }
+        bufflen++;
 
     }
     /*add zero char to end*/
