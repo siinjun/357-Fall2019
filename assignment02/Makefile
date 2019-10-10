@@ -6,12 +6,10 @@ all: fw
 fw: fw.c
 	gcc -o fw fw.c $(CFLAGS) 
 
-hashtable: hashtable.c
-	gcc -o hashtable -g $(CFLAGS) hashtable.c
 
-test : hashtable
+test : fw
 	echo Testing hashtable
-	./hashtable
+	./fw input.txt
 	echo done
 
 clean:

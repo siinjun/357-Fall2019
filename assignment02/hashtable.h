@@ -1,3 +1,6 @@
+#ifndef HASHTABLE
+#define HASHTABLE
+
 #include<string.h>
 #include<stdio.h>
 #include<stdlib.h>
@@ -73,6 +76,7 @@ HashTable *resize(HashTable *ht){
     unsigned long new_size = old->size * 2;
 
     new = create_ht(new_size);
+    new->items = old->items;
 
     for (i = 0 ; i < old->size; i++){
         /*if an index exists in the old hash table*/
@@ -97,7 +101,6 @@ HashTable *resize(HashTable *ht){
         }
 
     }
-
     /*free the old hashtable*/
     free(old);
     return new;
@@ -146,4 +149,4 @@ HashTable *insert_ht(HashTable *ht, char *word){
 
     return ht;
 }
-
+#endif
