@@ -18,10 +18,23 @@ unsigned long partition(HashTable *table, unsigned long start,
 
     for(i = start; i<end; i++){
         if(table->array[i].appearances >= pivot.appearances){
-            Index tmp = table->array[i];
-            table->array[i] = table->array[pIndex];
-            table->array[pIndex] = tmp;
-            pIndex++;
+            if(table->array[i].appearances == pivot.appearances){
+                if(table->array[i].word){
+                    int cmp = strcmp(table->array[i].word, pivot.word);
+                    if (cmp > 0){
+                        Index tmp = table->array[i];
+                        table->array[i] = table->array[pIndex];
+                        table->array[pIndex] = tmp;
+                        pIndex++;
+                    }
+                }
+            }
+            else{
+                Index tmp = table->array[i];
+                table->array[i] = table->array[pIndex];
+                table->array[pIndex] = tmp;
+                pIndex++;
+            }
         }
     }
     tmp = table->array[pIndex];

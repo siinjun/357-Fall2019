@@ -249,12 +249,14 @@ int main(int argc, char **argv){
     }*/
     
     quickSort(ht, 0, ht->size - 1);
-    for(k = 0; k < ht->size; k++){
-        if(ht->array[k].word)
-        printf("%s, appearances: %ld,  index: %d\n", ht->array[k].word, 
-                ht->array[k].appearances, k);
+    while(k<max_num){
+        if (k == ht->items){
+            break;
+        }
+        printf("%9ld %s\n", ht->array[k].appearances, ht->array[k].word);
+        k++;
     }
-    for(k = 0; k < ht->size; k++){
+    for(k = 0; k < ht->items; k++){
         if (ht->array[k].word)
             free(ht->array[k].word);
     }
