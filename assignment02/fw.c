@@ -182,14 +182,7 @@ int main(int argc, char **argv){
     char *cmd_args;
     int max_num = 10;
     int i = 1;
-    int j;
     int k;
-    int outputted = 0;
-    int largest;
-    int tmp_app;
-    int mst_app;
-    Index most_appeared;
-    Index tmp;
     /*initialize hashtable*/
     ht = create_ht(20);
     
@@ -214,41 +207,9 @@ int main(int argc, char **argv){
     }
     
     printf("The top %d words (out of %ld) are:\n", max_num, ht->items);
-   /* while(outputted < max_num){
-
-        if(outputted == ht->items){
-            break;
-        }
-        most_appeared.word = 0x0;
-        most_appeared.appearances = 0;
-        for(j = 0; j < ht->size; j++){
-            tmp = ht->array[j];
-            tmp_app = tmp.appearances;
-            mst_app = most_appeared.appearances;
-            if (mst_app == 0 && tmp_app > 0){
-                most_appeared = tmp;
-                largest = j;
-            }
-            else if(mst_app < tmp_app){
-                most_appeared = tmp;
-                largest = j;
-            }
-            else if((mst_app > 0 && tmp_app > 0) && mst_app == tmp_app){
-                int cmp = strcmp(most_appeared.word, tmp.word);
-                if (cmp < 0){
-                    most_appeared = tmp;
-                    largest = j;
-                }
-            }
-        }
-        printf("%9ld %s\n", most_appeared.appearances, most_appeared.word);
-        free(ht->array[largest].word);
-        ht->array[largest].word = 0x0;
-        ht->array[largest].appearances = 0;
-        outputted++;
-    }*/
     
     quickSort(ht, 0, ht->size - 1);
+    k=0;
     while(k<max_num){
         if (k == ht->items){
             break;
