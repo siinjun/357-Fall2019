@@ -25,9 +25,57 @@ HashTable *read_words(FILE *fp, HashTable *ht){
     int alpha;
 
     wordptr = malloc(size);
-    x++;
-
     while ((ch = fgetc(fp)) != EOF) {
+        alpha = isalpha(ch);
+        if ((!alpha) && word_len > 0){
+            char *tmp;
+            wordptr[word_len] = '\0';
+            tmp = realloc(wordptr, ++word_len);
+            if (!tmp){
+                perror("realloc failed");
+                exit(EXIT_SUCCESS);
+            }
+            wordptr = tmp;
+            ht = insert_ht(ht, wordptr);
+            wordptr = 0x0;
+            word_len = 0;
+            free(wordptr);
+            size = WORD;
+            wordptr = malloc(size);
+        }
+        else if(alpha){
+            /*if letter is uppercase change to lower*/
+            if (isupper(ch)){
+                ch = tolower(ch);
+            }
+            wordptr[word_len] = ch;
+            word_len++;
+            if(word_len >= size){
+                char *tmp = realloc(wordptr, size * 2);
+                if (!tmp){
+                    perror("realloc failed in read_words");
+                    exit(EXIT_SUCCESS);
+                }
+                wordptr = tmp;
+                size *= 2;
+            }
+        }
+    }
+    
+    free(wordptr);
+    return ht;
+}
+
+HashTable *read_from_stdin(HashTable *ht){
+    /*function reads words from a whole file and inserts them into a ht*/
+    char *wordptr = NULL;
+    size_t word_len = 0;
+    size_t size = WORD;
+    char ch;
+    int alpha;
+
+    wordptr = malloc(size);
+    while ((ch = getchar()) != EOF) {
         alpha = isalpha(ch);
         if ((!alpha) && word_len > 0){
             char *tmp;
@@ -158,6 +206,7 @@ int main(int argc, char **argv){
     }
     /*if no args, get words from stdin*/
     else{
+        ht = read_from_stdin(ht);
     }
     printf("The top %d words (out of %ld) are:\n", max_num, ht->items);
     while(outputted < max_num){
@@ -210,7 +259,6 @@ int main(int argc, char **argv){
 
     free(ht->array);
     free(ht);
-    printf("number of mallocs: %d\n", x);
 
     return 0;
 }
