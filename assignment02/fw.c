@@ -122,7 +122,7 @@ HashTable *open_file(const char *filename, HashTable *ht){
     fp = fopen(filename, "r");
 
     if(!fp){
-        printf("%s: no such file in directory\n", filename);
+        printf("%s: No such file in directory\n", filename);
     }
     else{
         ht = read_words(fp, ht);
@@ -244,7 +244,7 @@ int main(int argc, char **argv){
                 }
             }
         }
-        printf("%8ld %s\n", most_appeared.appearances, most_appeared.word);
+        printf("%9ld %s\n", most_appeared.appearances, most_appeared.word);
         free(ht->array[largest].word);
         ht->array[largest].word = 0x0;
         ht->array[largest].appearances = 0;
