@@ -109,7 +109,10 @@ HashTable *read_from_stdin(HashTable *ht){
                 wordptr = tmp;
                 size *= 2;
             }
-        }
+        }/*
+        else if(ch == '\b' && word_len > 0){
+            word_len--;
+        }*/
     }
     
     free(wordptr);
@@ -122,7 +125,7 @@ HashTable *open_file(const char *filename, HashTable *ht){
     fp = fopen(filename, "r");
 
     if(!fp){
-        printf("%s: No such file in directory\n", filename);
+        printf("%s: No such file or directory\n", filename);
     }
     else{
         ht = read_words(fp, ht);
@@ -187,7 +190,7 @@ int main(int argc, char **argv){
     Index most_appeared;
     Index tmp;
     /*initialize hashtable*/
-    ht = create_ht(50);
+    ht = create_ht(5000);
     
     /*if given args*/
     if(argc > 1){
@@ -229,18 +232,10 @@ int main(int argc, char **argv){
                 largest = j;
             }
             else if((mst_app > 0 && tmp_app > 0) && mst_app == tmp_app){
-                int most = strlen(most_appeared.word);
-                int curr = strlen(tmp.word);
-                if (curr < most){
+                int cmp = strcmp(most_appeared.word, tmp.word);
+                if (cmp < 0){
                     most_appeared = tmp;
                     largest = j;
-                }
-                else if (curr == most){
-                    int cmp = strcmp(most_appeared.word, tmp.word);
-                    if (cmp > 0){
-                        most_appeared = tmp;
-                        largest = j;
-                    }
                 }
             }
         }
