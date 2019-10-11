@@ -186,10 +186,9 @@ int lexicographically(const void *one , const void *two){
         return 1;
     }
     else{
-        /*
         if (a.word && b.word){
-            return strcmp(a.word, b.word);
-        }*/
+            return strcmp(b.word, a.word);
+        }
         return 0;
     }
 }
