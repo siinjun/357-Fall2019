@@ -5,6 +5,7 @@
             appearing words to stdout
 */
 
+#include "quicksort.h"
 #include "hashtable.h"
 #include<stdio.h>
 #include<stdlib.h>
@@ -190,7 +191,7 @@ int main(int argc, char **argv){
     Index most_appeared;
     Index tmp;
     /*initialize hashtable*/
-    ht = create_ht(5000);
+    ht = create_ht(20);
     
     /*if given args*/
     if(argc > 1){
@@ -211,8 +212,9 @@ int main(int argc, char **argv){
     else{
         ht = read_from_stdin(ht);
     }
+    
     printf("The top %d words (out of %ld) are:\n", max_num, ht->items);
-    while(outputted < max_num){
+   /* while(outputted < max_num){
 
         if(outputted == ht->items){
             break;
@@ -244,8 +246,14 @@ int main(int argc, char **argv){
         ht->array[largest].word = 0x0;
         ht->array[largest].appearances = 0;
         outputted++;
-    }
+    }*/
     
+    quickSort(ht, 0, ht->size - 1);
+    for(k = 0; k < ht->size; k++){
+        if(ht->array[k].word)
+        printf("%s, appearances: %ld,  index: %d\n", ht->array[k].word, 
+                ht->array[k].appearances, k);
+    }
     for(k = 0; k < ht->size; k++){
         if (ht->array[k].word)
             free(ht->array[k].word);
