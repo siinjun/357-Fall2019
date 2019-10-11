@@ -87,7 +87,6 @@ HashTable *resize(HashTable *ht){
 
             /*if index isn't filled*/
             if (!new->array[index % new_size].word){
-                printf("placing '%s' in index of new table %ld\n", tmp.word, index % new_size);
                 new->array[index % new_size] = tmp;
             }
             /*if it's occupied*/
@@ -95,15 +94,14 @@ HashTable *resize(HashTable *ht){
                 while(new->array[index % new_size].word){
                     index++;
                 }
-                printf("placing '%s' in index of new table %ld\n", tmp.word, index % new_size);
                 new->array[index % new_size] = tmp;
             }
         }
 
     }
     /*free the old hashtable*/
-    free(old);
-    free(old->array);
+    free(ht);
+    free(ht->array);
     return new;
 }
 
@@ -144,7 +142,6 @@ HashTable *insert_ht(HashTable *ht, char *word){
 
     lf = load_factor(ht);
     if (lf > 0.75){
-        printf("time to resize\n");
         ht = resize(ht);
     }
 

@@ -29,11 +29,11 @@ HashTable *read_words(FILE *fp, HashTable *ht){
         if ((ch == ' '|| ch == '\n' || ispunct(ch)) && word_len > 0){
             /*may have to add null at end of string*/
             ht = insert_ht(ht, wordptr);
-            wordptr = NULL;
+            wordptr = 0x0;
             free(wordptr);
             size = WORD;
-            word_len = 0;
             wordptr = malloc(size);
+            word_len = 0;
         }
         else if(alpha || ch == '\''){
             /*if letter is uppercase change to lower*/
@@ -53,7 +53,7 @@ HashTable *read_words(FILE *fp, HashTable *ht){
             }
         }
     }
-    
+    free(wordptr);
     return ht;
 }
 
@@ -123,10 +123,12 @@ int main(int argc, char **argv){
     int k;
     int outputted = 0;
     int largest;
+    int tmp_app;
+    int mst_app;
     Index most_appeared;
     Index tmp;
     /*initialize hashtable*/
-    ht = create_ht(5);
+    ht = create_ht(50);
     
     /*if given args*/
     if(argc > 1){
@@ -146,24 +148,27 @@ int main(int argc, char **argv){
     /*if no args, get words from stdin*/
     else{
     }
+    printf("the top %d most appeared words:\n", max_num);
     while(outputted < max_num){
 
         if(outputted == ht->items){
             break;
         }
-        most_appeared.word = NULL;
+        most_appeared.word = 0x0;
         most_appeared.appearances = 0;
         for(j = 0; j < ht->size; j++){
             tmp = ht->array[j];
-            if (!most_appeared.word && tmp.word){
+            tmp_app = tmp.appearances;
+            mst_app = most_appeared.appearances;
+            if (mst_app == 0 && tmp_app > 0){
                 most_appeared = tmp;
                 largest = j;
             }
-            else if(most_appeared.appearances < tmp.appearances){
+            else if(mst_app < tmp_app){
                 most_appeared = tmp;
                 largest = j;
             }
-            else if(most_appeared.appearances == tmp.appearances){
+            else if((mst_app > 0 && tmp_app > 0) && mst_app == tmp_app){
                 int most = strlen(most_appeared.word);
                 int curr = strlen(tmp.word);
                 if (curr < most){
@@ -183,13 +188,19 @@ int main(int argc, char **argv){
         }
         printf("%s %ld\n", most_appeared.word, most_appeared.appearances);
         free(ht->array[largest].word);
+        ht->array[largest].word = 0x0;
         ht->array[largest].appearances = 0;
         outputted++;
     }
+    
     for(k = 0; k < ht->size; k++){
-        free(ht->array[k].word);
+        if (ht->array[k].word)
+            free(ht->array[k].word);
     }
+    
+
     free(ht->array);
     free(ht);
+
     return 0;
 }
