@@ -29,6 +29,7 @@ HashTable *read_words(FILE *fp, HashTable *ht){
     while ((ch = fgetc(fp)) != EOF) {
         alpha = isalpha(ch);
         if ((!alpha) && word_len > 0){
+            printf("inserting wor: %s\n", wordptr);
             char *tmp;
             wordptr[word_len] = '\0';
             tmp = realloc(wordptr, ++word_len);
@@ -184,7 +185,7 @@ int main(int argc, char **argv){
     int i = 1;
     int k;
     /*initialize hashtable*/
-    ht = create_ht(20);
+    ht = create_ht(100);
     
     /*if given args*/
     if(argc > 1){

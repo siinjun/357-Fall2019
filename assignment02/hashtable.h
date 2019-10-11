@@ -91,8 +91,10 @@ HashTable *resize(HashTable *ht){
             }
             /*if it's occupied*/
             else{
+                int i = 2;
                 while(new->array[index % new_size].word){
-                    index++;
+                    index = index + (i*i);
+                    i++;
                 }
                 new->array[index % new_size] = tmp;
             }
@@ -119,6 +121,7 @@ HashTable *insert_ht(HashTable *ht, char *word){
     /*index is occupied*/
     if (ht->array[index].word != NULL){
         /*loop until spot is found*/
+        int i = 2;
         while (1){
             /*new word after finding NULL*/
             if (ht->array[index%size].word == NULL){
@@ -132,7 +135,9 @@ HashTable *insert_ht(HashTable *ht, char *word){
                 free(word);
                 break;
             }
-            index++;
+            /*quadtratic probing*/
+            index = index + (i * i);
+            i++;
         }
     }
     /*new word in new spot, no linear rehashing*/
