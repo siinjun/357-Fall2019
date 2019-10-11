@@ -244,7 +244,7 @@ int main(int argc, char **argv){
                 }
             }
         }
-        printf("%8s %ld\n", most_appeared.word, most_appeared.appearances);
+        printf("%8ld %s\n", most_appeared.appearances, most_appeared.word);
         free(ht->array[largest].word);
         ht->array[largest].word = 0x0;
         ht->array[largest].appearances = 0;
