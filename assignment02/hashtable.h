@@ -129,6 +129,7 @@ HashTable *insert_ht(HashTable *ht, char *word){
             /*word is already in hashtable*/
             else if (strcmp(ht->array[index%size].word, word) == 0){
                 ht->array[index%size].appearances += 1;
+                free(word);
                 break;
             }
             index++;

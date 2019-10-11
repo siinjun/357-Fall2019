@@ -14,6 +14,8 @@
 
 #define WORD 8
 
+int x = 0;
+
 HashTable *read_words(FILE *fp, HashTable *ht){
     /*function reads words from a whole file and inserts them into a ht*/
     char *wordptr = NULL;
@@ -23,21 +25,29 @@ HashTable *read_words(FILE *fp, HashTable *ht){
     int alpha;
 
     wordptr = malloc(size);
+    x++;
 
     while ((ch = fgetc(fp)) != EOF) {
         alpha = isalpha(ch);
-        if ((ch == ' '|| ch == '\n' || ispunct(ch)) && word_len > 0){
-            /*may have to add null at end of string*/
+        if ((!alpha) && word_len > 0){
+            char *tmp;
+            wordptr[word_len] = '\0';
+            tmp = realloc(wordptr, ++word_len);
+            if (!tmp){
+                perror("realloc failed");
+                exit(EXIT_SUCCESS);
+            }
+            wordptr = tmp;
             ht = insert_ht(ht, wordptr);
             wordptr = 0x0;
+            word_len = 0;
             free(wordptr);
             size = WORD;
             wordptr = malloc(size);
-            word_len = 0;
         }
-        else if(alpha || ch == '\''){
+        else if(alpha){
             /*if letter is uppercase change to lower*/
-            if (alpha == 1){
+            if (isupper(ch)){
                 ch = tolower(ch);
             }
             wordptr[word_len] = ch;
@@ -53,6 +63,7 @@ HashTable *read_words(FILE *fp, HashTable *ht){
             }
         }
     }
+    
     free(wordptr);
     return ht;
 }
@@ -148,7 +159,7 @@ int main(int argc, char **argv){
     /*if no args, get words from stdin*/
     else{
     }
-    printf("the top %d most appeared words:\n", max_num);
+    printf("The top %d words (out of %ld) are:\n", max_num, ht->items);
     while(outputted < max_num){
 
         if(outputted == ht->items){
@@ -181,10 +192,8 @@ int main(int argc, char **argv){
                         most_appeared = tmp;
                         largest = j;
                     }
-
                 }
             }
-
         }
         printf("%s %ld\n", most_appeared.word, most_appeared.appearances);
         free(ht->array[largest].word);
@@ -201,6 +210,7 @@ int main(int argc, char **argv){
 
     free(ht->array);
     free(ht);
+    printf("number of mallocs: %d\n", x);
 
     return 0;
 }
