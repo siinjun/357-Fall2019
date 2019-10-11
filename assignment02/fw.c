@@ -4,7 +4,6 @@
     Desc:   Read in files from stdin and output the most common
             appearing words to stdout
 */
-
 #include "quicksort.h"
 #include "hashtable.h"
 #include<stdio.h>
@@ -29,7 +28,6 @@ HashTable *read_words(FILE *fp, HashTable *ht){
     while ((ch = fgetc(fp)) != EOF) {
         alpha = isalpha(ch);
         if ((!alpha) && word_len > 0){
-            printf("inserting wor: %s\n", wordptr);
             char *tmp;
             wordptr[word_len] = '\0';
             tmp = realloc(wordptr, ++word_len);
@@ -177,6 +175,25 @@ int check_arg(char *cmd_args, int argc, char **argv, int i){
 }
 
 
+int lexicographically(const void *one , const void *two){
+    Index a = *(Index*)one;
+    Index b = *(Index*)two;
+    
+    if(a.appearances > b.appearances){
+        return -1;
+    }
+    else if(a.appearances < b.appearances){
+        return 1;
+    }
+    else{
+        /*
+        if (a.word && b.word){
+            return strcmp(a.word, b.word);
+        }*/
+        return 0;
+    }
+}
+
 int main(int argc, char **argv){
 
     HashTable *ht;
@@ -185,7 +202,7 @@ int main(int argc, char **argv){
     int i = 1;
     int k;
     /*initialize hashtable*/
-    ht = create_ht(100);
+    ht = create_ht(20);
     
     /*if given args*/
     if(argc > 1){
@@ -207,9 +224,12 @@ int main(int argc, char **argv){
         ht = read_from_stdin(ht);
     }
     
-    printf("The top %d words (out of %ld) are:\n", max_num, ht->items);
     
-    quickSort(ht, 0, ht->size - 1);
+    printf("The top %d words (out of %ld) are:\n", max_num, ht->items);
+
+
+    qsort(ht->array, ht->size, sizeof(Index), lexicographically);
+
     k=0;
     while(k<max_num){
         if (k == ht->items){
@@ -218,6 +238,7 @@ int main(int argc, char **argv){
         printf("%9ld %s\n", ht->array[k].appearances, ht->array[k].word);
         k++;
     }
+
     for(k = 0; k < ht->items; k++){
         if (ht->array[k].word)
             free(ht->array[k].word);

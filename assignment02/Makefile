@@ -6,6 +6,8 @@ all: fw
 fw: fw.c
 	gcc -o fw fw.c $(CFLAGS) 
 
+quicksort: quicksort.h
+	gcc 
 
 test : fw
 	echo Testing hashtable

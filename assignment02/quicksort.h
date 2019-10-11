@@ -2,7 +2,7 @@
 #define QUICKSORT
 
 #include "hashtable.h"
-
+#include<stdbool.h>
 
 
 unsigned long partition(HashTable *table, unsigned long start, 
@@ -12,11 +12,15 @@ unsigned long partition(HashTable *table, unsigned long start,
     int i;
     Index pivot;
     Index tmp;
+    bool iszero = false;
     
     pivot = table->array[end];
     pIndex = start;
-
     for(i = start; i<end; i++){
+        if(table->array[end].appearances == 0){
+            iszero = true;
+            break;
+        }
         if(table->array[i].appearances >= pivot.appearances){
             if(table->array[i].appearances == pivot.appearances){
                 if(table->array[i].word){
@@ -37,9 +41,14 @@ unsigned long partition(HashTable *table, unsigned long start,
             }
         }
     }
-    tmp = table->array[pIndex];
-    table->array[pIndex] = table->array[end];
-    table->array[end] = tmp;
+    if(!iszero){
+        tmp = table->array[pIndex];
+        table->array[pIndex] = table->array[end];
+        table->array[end] = tmp;
+    }
+    else{
+        pIndex = end;
+    }
     return pIndex;
 }
 
