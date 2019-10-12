@@ -4,7 +4,6 @@
     Desc:   Read in files from stdin and output the most common
             appearing words to stdout
 */
-#include "quicksort.h"
 #include "hashtable.h"
 #include<stdio.h>
 #include<stdlib.h>
@@ -27,7 +26,7 @@ HashTable *read_words(FILE *fp, HashTable *ht){
     wordptr = malloc(size);
     while ((ch = fgetc(fp)) != EOF) {
         alpha = isalpha(ch);
-        if ((!alpha) && word_len > 0){
+        if (!alpha && ch != '\b' && word_len > 0){
             char *tmp;
             wordptr[word_len] = '\0';
             tmp = realloc(wordptr, ++word_len);
@@ -48,6 +47,19 @@ HashTable *read_words(FILE *fp, HashTable *ht){
             if (isupper(ch)){
                 ch = tolower(ch);
             }
+            wordptr[word_len] = ch;
+            word_len++;
+            if(word_len >= size){
+                char *tmp = realloc(wordptr, size * 2);
+                if (!tmp){
+                    perror("realloc failed in read_words");
+                    exit(EXIT_SUCCESS);
+                }
+                wordptr = tmp;
+                size *= 2;
+            }
+        }
+        else if(ch == '\b' && word_len > 0){
             wordptr[word_len] = ch;
             word_len++;
             if(word_len >= size){
