@@ -10,7 +10,7 @@
 #include<string.h>
 #include<stdbool.h>
 #include<ctype.h>
-
+#include<errno.h>
 #define WORD 8
 
 int x = 0;
@@ -22,9 +22,18 @@ HashTable *read_words(FILE *fp, HashTable *ht){
     size_t size = WORD;
     char ch;
     int alpha;
+    bool end = false;
 
     wordptr = malloc(size);
-    while ((ch = fgetc(fp)) != EOF) {
+    while ((ch = fgetc(fp)) != EOF || !end) {
+        if(ch == EOF){
+            ch = fgetc(fp);
+            if(isalnum(ch) || ispunct(ch) || ch == ' ' || ch == '\n'){
+            }
+            else{
+                break;
+            }
+        }
         alpha = isalpha(ch);
         if (!alpha && word_len > 0){
             char *tmp;
@@ -60,7 +69,6 @@ HashTable *read_words(FILE *fp, HashTable *ht){
             }
         }
     }
-    
     free(wordptr);
     return ht;
 }
@@ -124,7 +132,12 @@ HashTable *open_file(const char *filename, HashTable *ht){
     fp = fopen(filename, "r");
 
     if(!fp){
-        printf("%s: No such file or directory\n", filename);
+        if(errno == EACCES){
+            printf("%s: Permission denied\n", filename);
+        }
+        else{
+            printf("%s: No such file or directory\n", filename);
+        }
     }
     else{
         ht = read_words(fp, ht);
