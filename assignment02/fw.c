@@ -210,7 +210,7 @@ int main(int argc, char **argv){
     int i = 1;
     int k;
     /*initialize hashtable*/
-    ht = create_ht(20);
+    ht = create_ht(2000);
     
     /*if given args*/
     if(argc > 1){
