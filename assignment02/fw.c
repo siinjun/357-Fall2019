@@ -22,15 +22,12 @@ HashTable *read_words(FILE *fp, HashTable *ht){
     size_t size = WORD;
     char ch;
     int alpha;
-    bool end = false;
 
     wordptr = malloc(size);
-    while ((ch = fgetc(fp)) != EOF || !end) {
+    while (1) {
+        ch  = fgetc(fp);
         if(ch == EOF){
-            ch = fgetc(fp);
-            if(isalnum(ch) || ispunct(ch) || ch == ' ' || ch == '\n'){
-            }
-            else{
+            if(feof(fp)){
                 break;
             }
         }
