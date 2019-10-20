@@ -227,40 +227,39 @@ int main(int argc, char *argv[]){
     fd = open(argv[1], O_RDONLY);
 
     size = find_size(argv[1], fd);
-
     buf = malloc(size + 1);
+    if(size){
+        buf = read_file(fd, buf, size);
+        buf[size] = '\0';
+        
+        list = create_table(buf, list);
 
-    buf = read_file(fd, buf, size);
-    buf[size] = '\0';
+        linked_list = create_linked_list(list);
 
-    list = create_table(buf, list);
+        tree = create_tree(linked_list);
 
-    linked_list = create_linked_list(list);
-
-    tree = create_tree(linked_list);
-
-    code = malloc(8);
-    code[0] = '\0';
-    if (!code){
-        perror("malloc");
-        exit(EXIT_FAILURE);
-    }
-
-    assign_codes(tree, 0, code);
-
-    for(i=0; i < 255; i++){
-        if(list[i]){
-            printf("0x%02x ('%c'): %s\n", list[i]->ch, 
-                                          list[i]->ch, 
-                                          list[i]->code);
+        code = malloc(8);
+        code[0] = '\0';
+        if (!code){
+            perror("malloc");
+            exit(EXIT_FAILURE);
         }
+
+        assign_codes(tree, 0, code);
+        for(i=0; i < 255; i++){
+            if(list[i]){
+                printf("0x%02x ('%c'): %s\n", list[i]->ch, 
+                                              list[i]->ch, 
+                                              list[i]->code);
+            }
+        }
+        free_tree(tree);
     }
 
     /*now free everything*/
     free(list);
     free(buf);
     free(code);
-    free_tree(tree);
     close(fd);
 
     return 0;
