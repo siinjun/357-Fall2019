@@ -3,7 +3,7 @@
 
 
 typedef struct Node{
-    char ch;
+    unsigned char ch;
     char *code;
     int freq;
     struct Node *next;

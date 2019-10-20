@@ -133,26 +133,40 @@ off_t find_size(char *filename, int fd){
 }
 
 char *read_file(int fd, char *buf, off_t size){
+
     int num;
 
     while((num = read(fd, buf, size)) != 0){}
+    close(fd);
     return buf;
 }
 
-Node **create_table(char *buf, Node **list){
-    int index, i = 0;
+char *read_binfile(char *buf, FILE *fptr, long int size){
 
-    while(buf[i] != '\0'){
+    fread(buf, size, 1, fptr);
+    return buf;
+}
+
+Node **create_table(char *buf, Node **list, long int size){
+    int index, i = 0;
+    while(i < size){
+    /*while(buf[i] != '\0'){*/
         Node *new;
+        int ch;
         new = malloc(sizeof(Node));
         index = buf[i];
+        ch = index;
+        if(index < 0){
+            
+            index += 255;
+        }
         if (!list[index]){
             new -> left = NULL;
             new -> right = NULL;
             new -> next = NULL;
             new -> code = NULL;
             new -> freq = 1;
-            new -> ch = index;
+            new -> ch = ch;
             list[index] = new;
         }
         else{
@@ -217,11 +231,12 @@ void assign_codes(Node *htree, int strlen, char *code){
         tmp[strlen] = '\0';
         assign_codes(htree->right, strlen, tmp);
     }
-    if(htree->ch){
+    /*if at a node w a char, assign code*/
+    if(!htree->left && !htree->right){
         htree->code = tmp;
     }
     /*if supernode with no char, free the tmp*/
-    if(!htree->ch)
+    if(htree->right || htree->left)
         free(tmp);
 }
 
@@ -241,7 +256,7 @@ void free_tree(Node *htree){
 
 
 int main(int argc, char *argv[]){
-    
+
     char *buf = NULL, *code = NULL;
     int fd, i;
     off_t size;
@@ -249,7 +264,7 @@ int main(int argc, char *argv[]){
     Node *linked_list = NULL;
     Node *tree;
 
-    list = calloc(255, sizeof(Node));
+    list = calloc(256, sizeof(Node));
 
     fd = open(argv[1], O_RDONLY);
 
@@ -258,8 +273,18 @@ int main(int argc, char *argv[]){
     if(size){
         buf = read_file(fd, buf, size);
         buf[size] = '\0';
+        if(strlen(buf) == 0){
+            FILE *fptr;
+            fptr = fopen(argv[1], "rb");
+            if(!fptr){
+                perror("fopen");
+                exit(EXIT_FAILURE);
+            }
+            buf = read_binfile(buf, fptr, size);
+            buf[size] = '\0';
+        }
         
-        list = create_table(buf, list);
+        list = create_table(buf, list, size);
 
         linked_list = create_linked_list(list);
 
@@ -275,7 +300,7 @@ int main(int argc, char *argv[]){
         assign_codes(tree, 0, code);
         for(i=0; i < 255; i++){
             if(list[i]){
-                printf("0x%02x: %s\n", list[i]->ch, 
+                printf("0x%02x: %s\n", list[i]->ch,
                                               list[i]->code);
             }
         }
@@ -286,7 +311,6 @@ int main(int argc, char *argv[]){
     free(list);
     free(buf);
     free(code);
-    close(fd);
 
     return 0;
 }
