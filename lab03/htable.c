@@ -36,14 +36,7 @@ Node *insert(Node *head, Node *new_node){
     
     if(!head){
         return new_node;
-    }/*
-    else if(!head->next){
-        if(head->freq < new_node->freq){
-            head->next = new_node;
-        }
-        else
-            head = swap(head, new_node);
-    }*/
+    }
     else{
         Node *tmp;
         tmp = head;
@@ -76,6 +69,40 @@ Node *insert(Node *head, Node *new_node){
     return head;
 }
 
+Node *super_insert(Node *head, Node *new_node){
+    
+    if(!head){
+        return new_node;
+    }
+    else{
+        Node *tmp;
+        tmp = head;
+        if (new_node->freq < head->freq){
+            new_node->next = head;
+            return new_node;
+        }
+        else{
+            bool swapped = false;
+            while(tmp->next){
+                if(new_node->freq < tmp->next->freq){
+                    tmp->next = swap(tmp->next, new_node);
+                    swapped = true;
+                    break;
+                }
+                else if (new_node->freq == tmp->next->freq){
+                    tmp->next = swap(tmp->next, new_node);
+                    swapped = true; 
+                    break;
+                }
+                tmp = tmp->next;
+            }
+            if(!swapped){
+                tmp->next = new_node;
+            }
+        }
+    }   
+    return head;
+}
 Node *create_linked_list(Node **list){
 
     int i;
@@ -167,7 +194,7 @@ Node *create_tree(Node *linkedlist){
         else
             linkedlist = NULL;
         supernode = create_supernode(one, two);
-        linkedlist = insert(linkedlist, supernode);
+        linkedlist = super_insert(linkedlist, supernode);
     }
     return linkedlist;
 }
