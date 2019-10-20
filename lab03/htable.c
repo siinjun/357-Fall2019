@@ -3,7 +3,7 @@
 #include<fcntl.h>
 #include<sys/types.h>
 #include<sys/stat.h>
-
+#include<errno.h>
 #include<stdlib.h>
 #include<stdio.h>
 #include<stdbool.h>
@@ -177,13 +177,17 @@ void assign_codes(Node *htree, int strlen, char *code){
     char *tmp;
     strlen++;
     tmp  = strdup(code);
-    tmp = realloc(tmp, strlen);
+    tmp = realloc(tmp, strlen + 1);
     if(htree->left){
+        /*if going down left, add 0 to string, also overwrites previous null*/
         tmp[strlen-1] = '0';
+        tmp[strlen] = '\0';
         assign_codes(htree->left, strlen, tmp);
     }
     if(htree->right){
+        /*if going down right, add 1 to string, also overwrites previous null*/
         tmp[strlen-1] = '1';
+        tmp[strlen] = '\0';
         assign_codes(htree->right, strlen, tmp);
     }
     if(htree->ch){
@@ -227,19 +231,23 @@ int main(int argc, char *argv[]){
     buf = malloc(size + 1);
 
     buf = read_file(fd, buf, size);
+    buf[size] = '\0';
 
     list = create_table(buf, list);
 
     linked_list = create_linked_list(list);
 
     tree = create_tree(linked_list);
+
     code = malloc(8);
+    code[0] = '\0';
     if (!code){
         perror("malloc");
         exit(EXIT_FAILURE);
     }
 
     assign_codes(tree, 0, code);
+
     for(i=0; i < 255; i++){
         if(list[i]){
             printf("0x%02x ('%c'): %s\n", list[i]->ch, 
