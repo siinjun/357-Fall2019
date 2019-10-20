@@ -4,6 +4,7 @@
 
 typedef struct Node{
     char ch;
+    char *code;
     int freq;
     struct Node *next;
     struct Node *left;

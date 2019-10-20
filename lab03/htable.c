@@ -11,10 +11,15 @@
 
 char *strdup(const char *str)
 {
-    int n = strlen(str) + 1;
-    char *dup = malloc(n);
-    if(dup){
-        strcpy(dup, str);
+    int n;
+    char *dup = NULL;
+    if(str)
+        n = strlen(str) + 1;
+    else
+        n = 1;
+    dup = malloc(n);
+    if(dup && str){
+        memcpy(dup, str, n);
     }
     return dup;
 }
@@ -184,8 +189,9 @@ void assign_codes(Node *htree, int strlen, char *code){
     if(htree->ch){
         htree->code = tmp;
     }
-    /*free(tmp);*/
-    /*free(code);*/
+    /*if supernode with no char, free the tmp*/
+    if(!htree->ch)
+        free(tmp);
 }
 
 
@@ -205,7 +211,7 @@ void free_tree(Node *htree){
 
 int main(int argc, char *argv[]){
     
-    char *buf, *code;
+    char *buf = NULL, *code = NULL;
     int fd, i;
     off_t size;
     Node **list;
@@ -218,22 +224,16 @@ int main(int argc, char *argv[]){
 
     size = find_size(argv[1], fd);
 
-    buf = malloc(size);
+    buf = malloc(size + 1);
 
     buf = read_file(fd, buf, size);
 
     list = create_table(buf, list);
 
     linked_list = create_linked_list(list);
-/*    tmp = linked_list;
-    
-    while(tmp){
-        printf("ch: %c, freq: %d\n", tmp->ch, tmp->freq);
-        tmp = tmp->next;
-    }
-*/
+
     tree = create_tree(linked_list);
-    code = malloc(1);
+    code = malloc(8);
     if (!code){
         perror("malloc");
         exit(EXIT_FAILURE);
@@ -242,14 +242,18 @@ int main(int argc, char *argv[]){
     assign_codes(tree, 0, code);
     for(i=0; i < 255; i++){
         if(list[i]){
-            printf("0x%02x ('%c'): %s\n", list[i]->ch,list[i]->ch, list[i]->code);
+            printf("0x%02x ('%c'): %s\n", list[i]->ch, 
+                                          list[i]->ch, 
+                                          list[i]->code);
         }
     }
+
+    /*now free everything*/
     free(list);
     free(buf);
     free(code);
-
     free_tree(tree);
     close(fd);
+
     return 0;
 }
