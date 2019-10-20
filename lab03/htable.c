@@ -249,7 +249,6 @@ int main(int argc, char *argv[]){
         for(i=0; i < 255; i++){
             if(list[i]){
                 printf("0x%02x: %s\n", list[i]->ch, 
-                                              list[i]->ch, 
                                               list[i]->code);
             }
         }
