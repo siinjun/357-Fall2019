@@ -150,7 +150,6 @@ char *read_binfile(char *buf, FILE *fptr, long int size){
 Node **create_table(char *buf, Node **list, long int size){
     int i = 0;
     while(i < size){
-    /*while(buf[i] != '\0'){*/
         Node *new;
         unsigned char ch;
         new = malloc(sizeof(Node));
@@ -268,16 +267,6 @@ int main(int argc, char *argv[]){
     if(size){
         buf = read_file(fd, buf, size);
         buf[size] = '\0';
-        if(strlen(buf) == 0){
-            FILE *fptr;
-            fptr = fopen(argv[1], "rb");
-            if(!fptr){
-                perror("fopen");
-                exit(EXIT_FAILURE);
-            }
-            buf = read_binfile(buf, fptr, size);
-            buf[size] = '\0';
-        }
         
         list = create_table(buf, list, size);
 
