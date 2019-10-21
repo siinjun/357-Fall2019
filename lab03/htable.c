@@ -108,7 +108,7 @@ Node *create_linked_list(Node **list){
     int i;
     Node *linked_list = NULL;
 
-    for(i=0; i < 255; i++){
+    for(i=0; i < 256; i++){
         if(list[i]){
             linked_list = insert(linked_list, list[i]);
         }
@@ -148,29 +148,24 @@ char *read_binfile(char *buf, FILE *fptr, long int size){
 }
 
 Node **create_table(char *buf, Node **list, long int size){
-    int index, i = 0;
+    int i = 0;
     while(i < size){
     /*while(buf[i] != '\0'){*/
         Node *new;
-        int ch;
+        unsigned char ch;
         new = malloc(sizeof(Node));
-        index = buf[i];
-        ch = index;
-        if(index < 0){
-            
-            index += 255;
-        }
-        if (!list[index]){
+        ch = buf[i];
+        if (!list[ch]){
             new -> left = NULL;
             new -> right = NULL;
             new -> next = NULL;
             new -> code = NULL;
             new -> freq = 1;
             new -> ch = ch;
-            list[index] = new;
+            list[ch] = new;
         }
         else{
-            list[index]->freq += 1;
+            list[ch]->freq += 1;
             free(new);
         }
         i++;
@@ -298,10 +293,9 @@ int main(int argc, char *argv[]){
         }
 
         assign_codes(tree, 0, code);
-        for(i=0; i < 255; i++){
+        for(i=0; i < 256; i++){
             if(list[i]){
-                printf("0x%02x: %s\n", list[i]->ch,
-                                              list[i]->code);
+                printf("0x%02x: %s\n", i, list[i]->code);
             }
         }
         free_tree(tree);
