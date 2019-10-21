@@ -234,8 +234,6 @@ void assign_codes(Node *htree, int strlen, char *code){
         free(tmp);
 }
 
-
-
 void free_tree(Node *htree){
 
     if(htree->left)
@@ -257,43 +255,46 @@ int main(int argc, char *argv[]){
     Node **list;
     Node *linked_list = NULL;
     Node *tree;
-
-    list = calloc(256, sizeof(Node));
-
-    fd = open(argv[1], O_RDONLY);
-
-    size = find_size(argv[1], fd);
-    buf = malloc(size + 1);
-    if(size){
-        buf = read_file(fd, buf, size);
-        buf[size] = '\0';
-        
-        list = create_table(buf, list, size);
-
-        linked_list = create_linked_list(list);
-
-        tree = create_tree(linked_list);
-
-        code = malloc(8);
-        code[0] = '\0';
-        if (!code){
-            perror("malloc");
-            exit(EXIT_FAILURE);
-        }
-
-        assign_codes(tree, 0, code);
-        for(i=0; i < 256; i++){
-            if(list[i]){
-                printf("0x%02x: %s\n", i, list[i]->code);
-            }
-        }
-        free_tree(tree);
+    if(argc != 2){
+        printf("Usage: htable filename\n");
     }
+    else{
+        list = calloc(256, sizeof(Node));
 
-    /*now free everything*/
-    free(list);
-    free(buf);
-    free(code);
+        fd = open(argv[1], O_RDONLY);
 
+        size = find_size(argv[1], fd);
+        buf = malloc(size + 1);
+        if(size){
+            buf = read_file(fd, buf, size);
+            buf[size] = '\0';
+            
+            list = create_table(buf, list, size);
+
+            linked_list = create_linked_list(list);
+
+            tree = create_tree(linked_list);
+
+            code = malloc(8);
+            code[0] = '\0';
+            if (!code){
+                perror("malloc");
+                exit(EXIT_FAILURE);
+            }
+
+            assign_codes(tree, 0, code);
+            for(i=0; i < 256; i++){
+                if(list[i]){
+                    printf("0x%02x: %s\n", i, list[i]->code);
+                }
+            }
+            free_tree(tree);
+        }
+
+        /*now free everything*/
+        free(list);
+        free(buf);
+        free(code);
+    }
     return 0;
 }
