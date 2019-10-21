@@ -263,6 +263,11 @@ int main(int argc, char *argv[]){
 
         fd = open(argv[1], O_RDONLY);
 
+        if (fd < 0){
+            perror(argv[1]);
+            exit(1);
+        }
+
         size = find_size(argv[1], fd);
         buf = malloc(size + 1);
         if(size){
