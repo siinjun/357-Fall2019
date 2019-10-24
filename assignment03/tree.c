@@ -141,12 +141,6 @@ void *read_file(int fd, void *buf, off_t size){
     return buf;
 }
 
-char *read_binfile(char *buf, FILE *fptr, long int size){
-
-    fread(buf, size, 1, fptr);
-    return buf;
-}
-
 Node **create_table(char *buf, Node **list, long int size){
     int i = 0;
     while(i < size){
@@ -227,6 +221,7 @@ void assign_codes(Node *htree, int strlen, char *code){
     }
     /*if at a node w a char, assign code*/
     if(!htree->left && !htree->right){
+        printf("code: %s for %c\n", tmp, htree->ch);
         htree->code = tmp;
     }
     /*if supernode with no char, free the tmp*/

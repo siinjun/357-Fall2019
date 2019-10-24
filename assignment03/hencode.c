@@ -10,7 +10,7 @@
 #include "node.h"
 #include "tree.c"
 
-char *write_to_file(char *filecontents, off_t size, Node **list){
+char *get_bin(char *filecontents, off_t size, Node **list){
 
     char *file_in_bin, *code;
     int i, count=0, buff=40;
@@ -100,8 +100,9 @@ uint8_t binary_to_hex(char *binary){
     return size;
 }
 
-int convert_to_hex(char *binary, int bytes, uint8_t *pp){
-    int i=0, vals=0;
+int convert_to_hex(char *binary, uint8_t *pp){
+    /* Returns number of bytes written to buffer*/
+    int i=0, bytes=0;
     char *byte;
     size_t buff = 8;
     byte = malloc(8);
@@ -109,7 +110,7 @@ int convert_to_hex(char *binary, int bytes, uint8_t *pp){
     while(binary[i] != '\0'){
         byte[i%8] = binary[i];
         if(i%8 == 7){
-            if (vals > buff){
+            if (bytes > buff){
                 pp = realloc(pp, buff * 2);
                 if (!pp){
                     perror("realloc");
@@ -117,13 +118,13 @@ int convert_to_hex(char *binary, int bytes, uint8_t *pp){
                 }
                 buff *= 2;
             }
-            pp[vals++] = binary_to_hex(byte);
+            pp[bytes++] = binary_to_hex(byte);
             byte = memset(byte, 0, 7);
         }
         i++;
     }
     if(i%8 != 0){
-        if (vals > buff){
+        if (bytes > buff){
             pp = realloc(pp, buff * 2);
             if (!pp){
                 perror("realloc");
@@ -131,10 +132,10 @@ int convert_to_hex(char *binary, int bytes, uint8_t *pp){
             }
             buff *= 2;
         }
-        pp[vals++] = binary_to_hex(byte);
+        pp[bytes++] = binary_to_hex(byte);
     }
-    pp = realloc(pp, vals);
-    return vals;
+    pp = realloc(pp, bytes);
+    return bytes;
 
 }
 
@@ -184,10 +185,10 @@ int main(int argc, char *argv[]){
     write(outfile, number_of_chars, 4);
     bytes = 4;
     bytes += write_header(outfile, list); 
-    binary = write_to_file(filecontents, size, list);
+    binary = get_bin(filecontents, size, list);
 
     hex = malloc(8);
-    bytes = convert_to_hex(binary, bytes, hex);
+    bytes = convert_to_hex(binary, hex);
     write(outfile, hex, bytes);
     close(infile);
     close(outfile);
