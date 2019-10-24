@@ -100,26 +100,41 @@ uint8_t binary_to_hex(char *binary){
     return size;
 }
 
-uint8_t *convert_to_hex(char *binary, int bytes){
+int convert_to_hex(char *binary, int bytes, uint8_t *pp){
     int i=0, vals=0;
     char *byte;
-    uint8_t *pp;
-
+    size_t buff = 8;
     byte = malloc(8);
-    pp = malloc(8);
 
     while(binary[i] != '\0'){
         byte[i%8] = binary[i];
         if(i%8 == 7){
+            if (vals > buff){
+                pp = realloc(pp, buff * 2);
+                if (!pp){
+                    perror("realloc");
+                    exit(1);
+                }
+                buff *= 2;
+            }
             pp[vals++] = binary_to_hex(byte);
             byte = memset(byte, 0, 7);
         }
         i++;
     }
     if(i%8 != 0){
-        pp[vals] = binary_to_hex(byte);
+        if (vals > buff){
+            pp = realloc(pp, buff * 2);
+            if (!pp){
+                perror("realloc");
+                exit(1);
+            }
+            buff *= 2;
+        }
+        pp[vals++] = binary_to_hex(byte);
     }
-    return pp;
+    pp = realloc(pp, vals);
+    return vals;
 
 }
 
@@ -139,6 +154,7 @@ int main(int argc, char *argv[]){
     int i, infile, outfile, bytes;
     uint32_t ch_count = 0;
     uint32_t *number_of_chars;
+    uint8_t *hex;
     off_t size;
     char *filecontents, *binary;
 
@@ -165,5 +181,9 @@ int main(int argc, char *argv[]){
     printf("bytes written before header = %d\n", bytes);
     binary = write_to_file(filecontents, size, list);
     printf("%s\n", binary);
+
+    hex = malloc(8);
+    bytes = convert_to_hex(binary, bytes, hex);
+    write(outfile, hex, bytes);
     return 0;
 }
