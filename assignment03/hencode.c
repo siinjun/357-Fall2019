@@ -7,8 +7,8 @@
 #include<stdlib.h>
 #include<stdio.h>
 #include<stdint.h>
-#include "tree.c"
 #include "node.h"
+#include "tree.c"
 
 char *write_to_file(char *filecontents, off_t size, Node **list){
 
@@ -138,16 +138,6 @@ int convert_to_hex(char *binary, int bytes, uint8_t *pp){
 
 }
 
-void test_bin(){
-    char *one = "01100000";
-    char *two = "00001010";
-    char *three = "11111010";
-    printf("0x%02x\n", binary_to_hex(one));
-    printf("0x%02x\n", binary_to_hex(two));
-    printf("0x%02x\n", binary_to_hex(three));
-    
-}
-
 int main(int argc, char *argv[]){
 
     Node **list;
@@ -161,15 +151,31 @@ int main(int argc, char *argv[]){
     list = get_list(argv[1]);
 
     infile = open(argv[1], O_RDONLY);
-    outfile = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-
+    /*if given bad file*/
+    if (infile == -1){
+        perror(argv[2]);
+        exit(1);
+    }
+    /*write to file given*/
+    if(argc == 3){
+        outfile = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    }
+    /*if file can't be opened*/
+    if (outfile == -1){
+        perror(argv[2]);
+        exit(1);
+    }
+    /*print to STDOUT*/
+    if (argc == 2){
+        outfile = 1;
+    }
 
     for(i=0; i < 256; i++){
         if(list[i]){
             ch_count++;
         }
     }
-    number_of_chars = calloc(5, sizeof(uint32_t));
+    number_of_chars = calloc(1, sizeof(uint32_t));
     number_of_chars[0] = ch_count;
     size = find_size(infile);
     filecontents = malloc(size + 1);
@@ -178,12 +184,12 @@ int main(int argc, char *argv[]){
     write(outfile, number_of_chars, 4);
     bytes = 4;
     bytes += write_header(outfile, list); 
-    printf("bytes written before header = %d\n", bytes);
     binary = write_to_file(filecontents, size, list);
-    printf("%s\n", binary);
 
     hex = malloc(8);
     bytes = convert_to_hex(binary, bytes, hex);
     write(outfile, hex, bytes);
+    close(infile);
+    close(outfile);
     return 0;
 }

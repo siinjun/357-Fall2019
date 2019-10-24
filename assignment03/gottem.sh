@@ -6,3 +6,4 @@ make
 
 ./a.out inputs/basic basic.mine
 mv basic.mine file_tests
+xxd file_tests/basic.mine

@@ -132,7 +132,7 @@ off_t find_size(int fd){
 
 }
 
-char *read_file(int fd, char *buf, off_t size){
+void *read_file(int fd, void *buf, off_t size){
 
     int num;
 
