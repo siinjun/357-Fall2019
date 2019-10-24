@@ -121,11 +121,22 @@ int main(int argc, char *argv[]){
     char *code;
 
     total_characters = calloc(1, sizeof(uint32_t));
-    
-    encoded = open(argv[1], O_RDONLY);
-    decoded = 1; /*STDOUT FIX LATER*/
+    /*set in and out to STDIN and STDOUT*/
+    decoded = 1;
+    encoded = 1;
+    if(argc > 1)
+        encoded = open(argv[1], O_RDONLY);
+    if(encoded < 0){
+        perror(argv[1]);
+        exit(1);
+    }
+    if(argc > 2)
+        decoded = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if(decoded < 0){
+        perror(argv[1]);
+        exit(1);
+    }
     read(encoded,total_characters,4);
-    printf("number of total_characters is %d\n", total_characters[0]);
     linked = read_header(encoded, total_characters[0], linked);
     tree = create_tree(linked);
     
