@@ -38,7 +38,6 @@ Node *read_header(int fd, uint32_t num_ch, Node *linked){
         new -> next = NULL;
         new -> left = NULL;
         new -> right = NULL;
-        printf("char: %c. freq: %d\n", ch[0], freq[0]);
         linked = insert(linked, new);
         count++;
     }
@@ -100,12 +99,16 @@ void read_body(int out, uint8_t *body, long int size, Node *root){
         for(j=0; j<8; j++){
             if(binary[j] == '1')
                 tmp = tmp -> right;
-            else
+            else{
                 tmp = tmp -> left;
+            }
             if(!tmp->right && !tmp->left && tmp->freq > 0){
                 ch[0] = tmp->ch;
                 tmp-> freq -= 1;
                 write(out, tmp, 1);
+                tmp = root;
+            }
+            if(!tmp->right && !tmp->left && tmp->freq== 0){
                 tmp = root;
             }
 

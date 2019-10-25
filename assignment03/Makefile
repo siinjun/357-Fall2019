@@ -12,3 +12,5 @@ test : hencode
 	./a.out inputs/basic basic.mine
 	echo "done"
 
+clean:
+	rm -rf *.o

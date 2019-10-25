@@ -221,7 +221,6 @@ void assign_codes(Node *htree, int strlen, char *code){
     }
     /*if at a node w a char, assign code*/
     if(!htree->left && !htree->right){
-        printf("code: %s for %c\n", tmp, htree->ch);
         htree->code = tmp;
     }
     /*if supernode with no char, free the tmp*/
