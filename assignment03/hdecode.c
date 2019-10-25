@@ -165,8 +165,10 @@ int main(int argc, char *argv[]){
             perror("malloc");
             exit(EXIT_FAILURE);
         }
-        body = read_file(encoded, body, body_size);
-        read_body(decoded, body, body_size, tree);    
+        if(total_characters[0] > 1){
+            body = read_file(encoded, body, body_size);
+            read_body(decoded, body, body_size, tree);
+        }
     }
     return 0;
 }
