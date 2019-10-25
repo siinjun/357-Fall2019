@@ -41,9 +41,8 @@ char *get_bin(char *filecontents, off_t size, Node **list){
 
     }
     file_in_bin = realloc(file_in_bin, count);
-    printf("count=%d\n", count);
     if(!file_in_bin){
-        perror("realo");
+        perror("realloc");
         exit(1);
     }
     file_in_bin[count] = '\0';
