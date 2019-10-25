@@ -10,10 +10,12 @@
 #include "node.h"
 #include "tree.c"
 
+int bytes_for_file=0;
+
 char *get_bin(char *filecontents, off_t size, Node **list){
 
     char *file_in_bin, *code;
-    int i, count=0, buff=40;
+    int i, count=0, buff=40, extra;
     Node *tmp;
 
     file_in_bin = malloc(buff);
@@ -39,6 +41,19 @@ char *get_bin(char *filecontents, off_t size, Node **list){
         }
         file_in_bin = strcat(file_in_bin, code);
 
+    }
+    extra = strlen(file_in_bin) % 8;
+    while(extra%8 != 0){
+        if(count >= buff){
+            file_in_bin = realloc(file_in_bin, buff * 2);
+            if(!file_in_bin){
+                perror(file_in_bin);
+                exit(2);
+            }
+            buff *= 2;
+        }
+        file_in_bin[count++] = '0';
+        extra++;
     }
     file_in_bin = realloc(file_in_bin, count);
     if(!file_in_bin){
@@ -100,17 +115,19 @@ uint8_t binary_to_hex(char *binary){
     return size;
 }
 
-int convert_to_hex(char *binary, uint8_t *pp){
+uint8_t *convert_to_hex(char *binary){
     /* Returns number of bytes written to buffer*/
     int i=0, bytes=0;
     char *byte;
-    size_t buff = 8;
+    size_t buff = 4;
+    uint8_t *pp;
+    pp = malloc(buff);
     byte = malloc(8);
 
     while(binary[i] != '\0'){
         byte[i%8] = binary[i];
         if(i%8 == 7){
-            if (bytes > buff){
+            if (bytes >= buff){
                 pp = realloc(pp, buff * 2);
                 if (!pp){
                     perror("realloc");
@@ -124,7 +141,7 @@ int convert_to_hex(char *binary, uint8_t *pp){
         i++;
     }
     if(i%8 != 0){
-        if (bytes > buff){
+        if (bytes >= buff){
             pp = realloc(pp, buff * 2);
             if (!pp){
                 perror("realloc");
@@ -132,17 +149,17 @@ int convert_to_hex(char *binary, uint8_t *pp){
             }
             buff *= 2;
         }
-        pp[bytes++] = binary_to_hex(byte);
+        pp[bytes] = binary_to_hex(byte);
     }
-    pp = realloc(pp, bytes);
-    return bytes;
+    bytes_for_file = bytes;
+    return pp;
 
 }
 
 int main(int argc, char *argv[]){
 
     Node **list;
-    int i, infile, outfile, bytes;
+    int i, infile, outfile, num;
     uint32_t ch_count = 0;
     uint32_t *number_of_chars;
     uint8_t *hex;
@@ -184,14 +201,15 @@ int main(int argc, char *argv[]){
 
     write(outfile, number_of_chars, 4);
     if(ch_count > 0){
-        bytes = 4;
-        bytes += write_header(outfile, list);
+        bytes_for_file = 4;
+        bytes_for_file += write_header(outfile, list);
         if (ch_count > 1){
             binary = get_bin(filecontents, size, list);
-
-            hex = malloc(8);
-            bytes = convert_to_hex(binary, hex);
-            write(outfile, hex, bytes);
+            hex = convert_to_hex(binary);
+            num = write(outfile, hex, bytes_for_file);
+            if(num < 0){
+                perror("write");
+            }
         }
         close(infile);
         close(outfile);
