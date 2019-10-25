@@ -1,11 +1,11 @@
 CFLAGS = -g -Wall -ansi -pedantic
 
-all: hencode
+all: hencode hdecode
 
 hencode: hencode.c
-	gcc -o a.out $(CFLAGS) hencode.c
+	gcc -o hencode $(CFLAGS) hencode.c
 hdecode: hdecode.c
-	gcc -o b.out $(CFLAGS) hdecode.c
+	gcc -o hdecode $(CFLAGS) hdecode.c
 
 test : hencode
 	echo "testing hencode"
