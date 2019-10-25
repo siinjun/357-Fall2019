@@ -12,7 +12,7 @@
 
 int bytes_for_file=0;
 
-char *get_bin(char *filecontents, off_t size, Node **list){
+char *get_bin(unsigned char *filecontents, off_t size, Node **list){
 
     char *file_in_bin, *code;
     int i, count=0, buff=40, extra;
@@ -164,9 +164,9 @@ int main(int argc, char *argv[]){
     uint32_t *number_of_chars;
     uint8_t *hex;
     off_t size;
-    char *filecontents, *binary;
+    unsigned char *filecontents;
+    char *binary;
 
-    list = get_list(argv[1]);
 
     infile = open(argv[1], O_RDONLY);
     /*if given bad file*/
@@ -187,6 +187,7 @@ int main(int argc, char *argv[]){
     if (argc == 2){
         outfile = 1;
     }
+    list = get_list(argv[1]);
 
     for(i=0; i < 256; i++){
         if(list[i]){

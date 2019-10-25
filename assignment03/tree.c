@@ -132,7 +132,7 @@ off_t find_size(int fd){
 
 }
 
-void *read_file(int fd, void *buf, off_t size){
+unsigned char *read_file(int fd, unsigned char *buf, off_t size){
 
     int num;
 
@@ -141,7 +141,13 @@ void *read_file(int fd, void *buf, off_t size){
     return buf;
 }
 
-Node **create_table(char *buf, Node **list, long int size){
+char *read_binfile(char *buf, FILE *fptr, long int size){
+
+    fread(buf, size, 1, fptr);
+    return buf;
+}
+
+Node **create_table(unsigned char *buf, Node **list, long int size){
     int i = 0;
     while(i < size){
         Node *new;
@@ -240,55 +246,10 @@ void free_tree(Node *htree){
 
 }
 
-
-Node *get_codes(char *filename){
-
-    char *buf = NULL, *code = NULL;
-    int fd;
-    off_t size;
-    Node **list;
-    Node *linked_list = NULL;
-    Node *tree;
-
-    list = calloc(256, sizeof(Node));
-
-    fd = open(filename, O_RDONLY);
-
-    if (fd < 0){
-        perror(filename);
-        exit(1);
-    }
-
-    size = find_size(fd);
-    buf = malloc(size + 1);
-    if(size){
-        buf = read_file(fd, buf, size);
-        buf[size] = '\0';
-        
-        list = create_table(buf, list, size);
-
-        linked_list = create_linked_list(list);
-
-        tree = create_tree(linked_list);
-
-        code = malloc(8);
-        code[0] = '\0';
-        if (!code){
-            perror("malloc");
-            exit(EXIT_FAILURE);
-        }
-
-        assign_codes(tree, 0, code);
-    }
-    free(list);
-    free(buf);
-    free(code);
-    return tree;
-}
-
 Node **get_list(char *filename){
 
-    char *buf = NULL, *code = NULL;
+    unsigned char *buf = NULL;
+    char *code = NULL;
     int fd;
     off_t size;
     Node **list;
@@ -325,6 +286,8 @@ Node **get_list(char *filename){
 
         assign_codes(tree, 0, code);
     }
+
+    /*now free everything*/
     free(buf);
     free(code);
     return list;
