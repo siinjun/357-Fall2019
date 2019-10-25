@@ -1,12 +1,14 @@
 #!/bin/bash
 
-echo "Initial Test"
+echo "Testing"
 
 make
 
-./a.out inputs/basic basic.mine
-mv basic.mine encoded
-xxd encoded/basic.mine
+echo "test 1"
 
-make hdecode
-./b.out encoded/basic.mine
+./hencode testing/NICO-Hencode/00_empty testing/hencode_mine/encode0.mine
+diff testing/hencode_mine/encode1.mine testing/NICO-hdecode/00_empty.huff
+
+echo "test 2"
+./hencode testing/NICO-Hencode/01_onechar testing/hencode_mine/encode1.mine
+diff testing/hencode_mine/encode1.mine testing/NICO-hdecode/01_onechar.huff

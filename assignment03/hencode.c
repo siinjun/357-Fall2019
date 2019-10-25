@@ -32,7 +32,7 @@ char *get_bin(char *filecontents, off_t size, Node **list){
         if(count >= buff){
             file_in_bin = realloc(file_in_bin, buff * 2);
             if(!file_in_bin){
-                perror("realloc");
+                perror(file_in_bin);
                 exit(2);
             }
             buff *= 2;
@@ -41,8 +41,9 @@ char *get_bin(char *filecontents, off_t size, Node **list){
 
     }
     file_in_bin = realloc(file_in_bin, count);
+    printf("count=%d\n", count);
     if(!file_in_bin){
-        perror("realloc");
+        perror("realo");
         exit(1);
     }
     file_in_bin[count] = '\0';
@@ -183,14 +184,18 @@ int main(int argc, char *argv[]){
     filecontents = read_file(infile, filecontents, size);
 
     write(outfile, number_of_chars, 4);
-    bytes = 4;
-    bytes += write_header(outfile, list); 
-    binary = get_bin(filecontents, size, list);
+    if(ch_count > 0){
+        bytes = 4;
+        bytes += write_header(outfile, list);
+        if (ch_count > 1){
+            binary = get_bin(filecontents, size, list);
 
-    hex = malloc(8);
-    bytes = convert_to_hex(binary, hex);
-    write(outfile, hex, bytes);
-    close(infile);
-    close(outfile);
+            hex = malloc(8);
+            bytes = convert_to_hex(binary, hex);
+            write(outfile, hex, bytes);
+        }
+        close(infile);
+        close(outfile);
+    }
     return 0;
 }
