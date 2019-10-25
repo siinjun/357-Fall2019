@@ -35,6 +35,10 @@ Node *read_header(int fd, uint32_t num_ch, Node *linked){
         read(fd, freq, 4);
         new -> ch = ch[0];
         new -> freq = freq[0];
+        new -> next = NULL;
+        new -> left = NULL;
+        new -> right = NULL;
+        printf("char: %c. freq: %d\n", ch[0], freq[0]);
         linked = insert(linked, new);
         count++;
     }
@@ -136,29 +140,30 @@ int main(int argc, char *argv[]){
         perror(argv[1]);
         exit(1);
     }
-    read(encoded,total_characters,4);
-    linked = read_header(encoded, total_characters[0], linked);
-    tree = create_tree(linked);
-    
-    code = malloc(8);
-    code[0] = '\0';
-    if (!code){
-        perror("malloc");
-        exit(EXIT_FAILURE);
-    }
-
-    assign_codes(tree, 0, code);
-
     body_size = find_size(encoded);
-    body_size -= 5 * total_characters[0] + 4;
-    body = malloc(body_size);
-    if (!body){
+    if(body_size > 0){
+        read(encoded,total_characters,4);
+        linked = read_header(encoded, total_characters[0], linked);
+        tree = create_tree(linked);
+        
+        code = malloc(8);
+        code[0] = '\0';
+        if (!code){
+            perror("malloc");
+            exit(EXIT_FAILURE);
+        }
 
-        perror("malloc");
-        exit(EXIT_FAILURE);
+        assign_codes(tree, 0, code);
+
+        body_size -= 5 * total_characters[0] + 4;
+        body = malloc(body_size);
+        if (!body){
+
+            perror("malloc");
+            exit(EXIT_FAILURE);
+        }
+        body = read_file(encoded, body, body_size);
+        read_body(decoded, body, body_size, tree);    
     }
-    body = read_file(encoded, body, body_size);
-    read_body(decoded, body, body_size, tree);    
-
     return 0;
 }

@@ -5,8 +5,8 @@ echo "Initial Test"
 make
 
 ./a.out inputs/basic basic.mine
-mv basic.mine file_tests
-xxd file_tests/basic.mine
+mv basic.mine encoded
+xxd encoded/basic.mine
 
 make hdecode
-./b.out file_tests/basic.mine
+./b.out encoded/basic.mine
