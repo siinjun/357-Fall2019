@@ -116,6 +116,18 @@ void read_body(int out, uint8_t *body, long int size, Node *root){
     }
 }
 
+void read_one_char(int out, Node *root){
+
+    int i, size;
+    char *cp;
+    size = root->freq;
+    cp = malloc(1);
+    cp[0] = root->ch;
+
+    for(i=0; i < size;i++)
+        write(out, cp, 1);
+
+}
 
 int main(int argc, char *argv[]){
 
@@ -144,7 +156,7 @@ int main(int argc, char *argv[]){
         exit(1);
     }
     body_size = find_size(encoded);
-    if(body_size > 0){
+    if(body_size > 4){
         read(encoded,total_characters,4);
         linked = read_header(encoded, total_characters[0], linked);
         tree = create_tree(linked);
@@ -168,6 +180,9 @@ int main(int argc, char *argv[]){
         if(total_characters[0] > 1){
             body = read_file(encoded, body, body_size);
             read_body(decoded, body, body_size, tree);
+        }
+        if(total_characters[0] == 1){
+            read_one_char(decoded, tree);
         }
     }
     return 0;
