@@ -33,7 +33,7 @@ Node *swap(Node *swapped, Node *new_node){
 }
 
 Node *insert(Node *head, Node *new_node){
-    
+
     if(!head){
         return new_node;
     }
@@ -55,7 +55,7 @@ Node *insert(Node *head, Node *new_node){
                 else if (new_node->freq == tmp->next->freq){
                     if(new_node->ch < tmp->next->ch){
                         tmp->next = swap(tmp->next, new_node);
-                        swapped = true; 
+                        swapped = true;
                         break;
                     }
                 }
@@ -65,12 +65,12 @@ Node *insert(Node *head, Node *new_node){
                 tmp->next = new_node;
             }
         }
-    }   
+    }
     return head;
 }
 
 Node *super_insert(Node *head, Node *new_node){
-    
+
     if(!head){
         return new_node;
     }
@@ -91,7 +91,7 @@ Node *super_insert(Node *head, Node *new_node){
                 }
                 else if (new_node->freq == tmp->next->freq){
                     tmp->next = swap(tmp->next, new_node);
-                    swapped = true; 
+                    swapped = true;
                     break;
                 }
                 tmp = tmp->next;
@@ -100,7 +100,7 @@ Node *super_insert(Node *head, Node *new_node){
                 tmp->next = new_node;
             }
         }
-    }   
+    }
     return head;
 }
 Node *create_linked_list(Node **list){
@@ -191,7 +191,7 @@ Node *create_supernode(Node *first, Node *second){
 }
 
 Node *create_tree(Node *linkedlist){
-    
+
     while(linkedlist->next){
         Node *supernode;
         Node *one = linkedlist;
@@ -270,7 +270,7 @@ Node **get_list(char *filename){
     if(size){
         buf = read_file(fd, buf, size);
         buf[size] = '\0';
-        
+
         list = create_table(buf, list, size);
 
         linked_list = create_linked_list(list);
