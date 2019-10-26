@@ -65,31 +65,21 @@ char *get_bin(unsigned char *filecontents, off_t size, Node **list){
 
 }
 
-int write_header(int outfile, Node **list){
-
-    uint8_t *ch;
-    uint32_t *count;
+void write_header(int outfile, Node **list){
+    /*returns the number of bytes to written to header*/
+    uint8_t ch;
+    uint32_t count;
     int i = 0;
-    int single_bytes=0, multi_bytes=0;
-    int total;
 
-    count = calloc(1, sizeof(uint32_t));
-    ch = calloc(1, sizeof(uint8_t));
     for(; i < 256; i++){
         if(list[i]){
             Node *node = list[i];
-            ch[0] = node->ch;
-            count[0] = node->freq;
-            write(outfile, ch, 1);
-            write(outfile, count, 4);
-            single_bytes += 1;
-            multi_bytes += 1;
+            ch = node->ch;
+            count = node->freq;
+            write(outfile, &ch, 1);
+            write(outfile, &count, 4);
         }
     }
-    free(ch);
-    free(count);
-    total = single_bytes + (4*multi_bytes);
-    return total;
 }
 
 
@@ -120,7 +110,7 @@ uint8_t *convert_to_hex(char *binary){
     /* Returns number of bytes written to buffer*/
     int i=0, bytes=0;
     char *byte;
-    size_t buff = 4;
+    size_t buff = 80;
     uint8_t *pp;
     pp = malloc(buff);
     byte = malloc(8);
@@ -152,6 +142,7 @@ uint8_t *convert_to_hex(char *binary){
         }
         pp[bytes] = binary_to_hex(byte);
     }
+    /*sets how many bytes to write*/
     bytes_for_file = bytes;
     free(byte);
     return pp;
@@ -179,8 +170,10 @@ int main(int argc, char *argv[]){
         perror(argv[1]);
         exit(1);
     }
+    /*initialize output to stdout*/
     outfile = 1;
-    /*write to file given*/
+
+    /*write to file given, if given*/
     if(argc == 3){
         outfile = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
     }
@@ -198,27 +191,30 @@ int main(int argc, char *argv[]){
             ch_count++;
         }
     }
-    size = find_size(infile);
-
+    /*initialize file contents to extern var*/
+    size = file_size;
     filecontents = file_cont;
+
     /*initial write to file*/
     write(outfile, &ch_count, 4);
-    /*file is not empty*/
+
+    /*file is not empty, continue to encode*/
     if(ch_count > 0){
-        bytes_for_file = 4;
-        bytes_for_file += write_header(outfile, list);
+        write_header(outfile, list);
         if (ch_count > 1){
             binary = get_bin(filecontents, size, list);
             hex = convert_to_hex(binary);
             num = write(outfile, hex, bytes_for_file);
             if(num < 0){
                 perror("write");
+                exit(1);
             }
             free(binary);
             free(hex);
         }
         close(infile);
         close(outfile);
+        /*free tree since no longer needed*/
         free_tree(glob_tree);
     }
     free(list);

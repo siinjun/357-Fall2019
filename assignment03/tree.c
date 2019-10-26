@@ -286,7 +286,8 @@ Node **get_list(char *filename){
 
         assign_codes(tree, 0, code);
     }
-
+    /*set global var*/
+    file_size = size;
     file_cont = buf;
     glob_tree = tree;
     /*now free everything*/
