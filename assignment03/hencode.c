@@ -55,7 +55,7 @@ char *get_bin(unsigned char *filecontents, off_t size, Node **list){
         file_in_bin[count++] = '0';
         extra++;
     }
-    file_in_bin = realloc(file_in_bin, count);
+    file_in_bin = realloc(file_in_bin, count+1);
     if(!file_in_bin){
         perror("realloc");
         exit(1);
@@ -86,7 +86,8 @@ int write_header(int outfile, Node **list){
             multi_bytes += 1;
         }
     }
-    
+    free(ch);
+    free(count);
     total = single_bytes + (4*multi_bytes);
     return total;
 }
@@ -152,8 +153,8 @@ uint8_t *convert_to_hex(char *binary){
         pp[bytes] = binary_to_hex(byte);
     }
     bytes_for_file = bytes;
+    free(byte);
     return pp;
-
 }
 
 int main(int argc, char *argv[]){
@@ -161,32 +162,35 @@ int main(int argc, char *argv[]){
     Node **list;
     int i, infile, outfile, num;
     uint32_t ch_count = 0;
-    uint32_t *number_of_chars;
     uint8_t *hex;
     off_t size;
     unsigned char *filecontents;
     char *binary;
 
-
+    if(argc < 2){
+        printf("Usage: hencode infile [ outfile ]\n");
+        exit(0);
+    }
+    /*open file*/
     infile = open(argv[1], O_RDONLY);
+
     /*if given bad file*/
     if (infile == -1){
-        perror(argv[2]);
+        perror(argv[1]);
         exit(1);
     }
+    outfile = 1;
     /*write to file given*/
     if(argc == 3){
         outfile = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
     }
+
     /*if file can't be opened*/
     if (outfile == -1){
         perror(argv[2]);
         exit(1);
     }
-    /*print to STDOUT*/
-    if (argc == 2){
-        outfile = 1;
-    }
+
     list = get_list(argv[1]);
 
     for(i=0; i < 256; i++){
@@ -194,13 +198,12 @@ int main(int argc, char *argv[]){
             ch_count++;
         }
     }
-    number_of_chars = calloc(1, sizeof(uint32_t));
-    number_of_chars[0] = ch_count;
     size = find_size(infile);
-    filecontents = malloc(size + 1);
-    filecontents = read_file(infile, filecontents, size);
 
-    write(outfile, number_of_chars, 4);
+    filecontents = file_cont;
+    /*initial write to file*/
+    write(outfile, &ch_count, 4);
+    /*file is not empty*/
     if(ch_count > 0){
         bytes_for_file = 4;
         bytes_for_file += write_header(outfile, list);
@@ -211,9 +214,14 @@ int main(int argc, char *argv[]){
             if(num < 0){
                 perror("write");
             }
+            free(binary);
+            free(hex);
         }
         close(infile);
         close(outfile);
+        free_tree(glob_tree);
     }
+    free(list);
+    free(filecontents);
     return 0;
 }

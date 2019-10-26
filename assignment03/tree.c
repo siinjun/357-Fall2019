@@ -211,7 +211,7 @@ void assign_codes(Node *htree, int strlen, char *code){
 
     char *tmp;
     strlen++;
-    tmp  = strdup(code);
+    tmp = strdup(code);
     tmp = realloc(tmp, strlen + 1);
     if(htree->left){
         /*if going down left, add 0 to string, also overwrites previous null*/
@@ -287,8 +287,9 @@ Node **get_list(char *filename){
         assign_codes(tree, 0, code);
     }
 
+    file_cont = buf;
+    glob_tree = tree;
     /*now free everything*/
-    free(buf);
     free(code);
     return list;
 }

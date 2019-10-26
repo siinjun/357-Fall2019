@@ -10,5 +10,6 @@ typedef struct Node{
     struct Node *left;
     struct Node *right;
 } Node;
-
+unsigned char *file_cont;
+Node *glob_tree;
 #endif

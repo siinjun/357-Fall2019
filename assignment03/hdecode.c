@@ -41,6 +41,8 @@ Node *read_header(int fd, uint32_t num_ch, Node *linked){
         linked = insert(linked, new);
         count++;
     }
+    free(freq);
+    free(ch);
     return linked;
 }
 
@@ -89,7 +91,7 @@ char *convert_hex_to_bin(uint8_t hex){
 
 void read_body(int out, uint8_t *body, long int size, Node *root){
 
-    int i=0, j;
+    int i=0, j, num;
     char *binary, *ch;
     Node *tmp = root;
 
@@ -105,7 +107,11 @@ void read_body(int out, uint8_t *body, long int size, Node *root){
             if(!tmp->right && !tmp->left && tmp->freq > 0){
                 ch[0] = tmp->ch;
                 tmp-> freq -= 1;
-                write(out, tmp, 1);
+                num = write(out, tmp, 1);
+                if (num< 0){
+                    perror("write");
+                    exit(1);
+                }
                 tmp = root;
             }
             if(!tmp->right && !tmp->left && tmp->freq== 0){
@@ -113,20 +119,27 @@ void read_body(int out, uint8_t *body, long int size, Node *root){
             }
 
         }
+        free(binary);
     }
+    free(ch);
 }
 
 void read_one_char(int out, Node *root){
 
-    int i, size;
+    int i, size, num;
     char *cp;
     size = root->freq;
     cp = malloc(1);
     cp[0] = root->ch;
 
-    for(i=0; i < size;i++)
-        write(out, cp, 1);
-
+    for(i=0; i < size;i++){
+        num = write(out, cp, 1);
+        if(num<0){
+            perror("write");
+            exit(1);
+        }
+    }
+    free(cp);
 }
 
 int main(int argc, char *argv[]){
@@ -141,21 +154,30 @@ int main(int argc, char *argv[]){
 
     total_characters = calloc(1, sizeof(uint32_t));
     /*set in and out to STDIN and STDOUT*/
+    encoded = 0;
     decoded = 1;
-    encoded = 1;
-    if(argc > 1)
+    /*if incorrect args*/
+    if (argc > 3){
+        printf("Usage: hdecode [ ( infile | - ) [ outfile ] ]\n");
+        exit(0);
+    }
+    /*if more than 1 arg and second arg isnt "-"*/
+    if(argc > 1 && strcmp(argv[1], "-"))
         encoded = open(argv[1], O_RDONLY);
+
     if(encoded < 0){
         perror(argv[1]);
         exit(1);
     }
-    if(argc > 2)
+    /*if given three args*/
+    if(argc == 3)
         decoded = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if(decoded < 0){
         perror(argv[1]);
         exit(1);
     }
     body_size = find_size(encoded);
+    /*checks if body size is larger than size of empty file*/
     if(body_size > 4){
         read(encoded,total_characters,4);
         linked = read_header(encoded, total_characters[0], linked);
@@ -173,7 +195,6 @@ int main(int argc, char *argv[]){
         body_size -= 5 * total_characters[0] + 4;
         body = malloc(body_size);
         if (!body){
-
             perror("malloc");
             exit(EXIT_FAILURE);
         }
@@ -184,6 +205,10 @@ int main(int argc, char *argv[]){
         if(total_characters[0] == 1){
             read_one_char(decoded, tree);
         }
+        free(code);
+        free(body);
+        free_tree(tree);
     }
+    free(total_characters);
     return 0;
 }
