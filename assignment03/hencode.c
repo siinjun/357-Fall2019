@@ -10,12 +10,20 @@
 #include "node.h"
 #include "tree.c"
 
+#define CHONK 80
+
 int bytes_for_file=0;
 
 char *get_bin(unsigned char *filecontents, off_t size, Node **list){
-
+    /*
+     *This function takes in a file's contents and turns it into binary based
+     *on the code for each char.
+     *
+     *Returns a char pointer of the file in binary(so not really binary but
+     *y'know)
+    */
     char *file_in_bin, *code;
-    int i, count=0, buff=40, extra;
+    int i, count=0, buff=CHONK, extra;
     Node *tmp;
 
     file_in_bin = malloc(buff);
@@ -25,12 +33,13 @@ char *get_bin(unsigned char *filecontents, off_t size, Node **list){
         perror("malloc");
         exit(2);
     }
-
+    /*iterate through each char in the file*/
     for(i=0; i < size; i++){
         unsigned char ch = filecontents[i];
         tmp = list[ch];
         code = tmp->code;
         count += strlen(code);
+
         if(count >= buff){
             file_in_bin = realloc(file_in_bin, buff * 2);
             if(!file_in_bin){
@@ -42,6 +51,7 @@ char *get_bin(unsigned char *filecontents, off_t size, Node **list){
         file_in_bin = strcat(file_in_bin, code);
 
     }
+    /*if length of string doesn't end at a byte, pad buffer with 0s*/
     extra = strlen(file_in_bin) % 8;
     while(extra%8 != 0){
         if(count >= buff){
@@ -55,23 +65,24 @@ char *get_bin(unsigned char *filecontents, off_t size, Node **list){
         file_in_bin[count++] = '0';
         extra++;
     }
+    /*realloc pointer to actual size*/
     file_in_bin = realloc(file_in_bin, count+1);
     if(!file_in_bin){
         perror("realloc");
         exit(1);
     }
     file_in_bin[count] = '\0';
-    return file_in_bin;    
+    return file_in_bin;
 
 }
 
 void write_header(int outfile, Node **list){
-    /*returns the number of bytes to written to header*/
+    /*writes the header of the file, returns void*/
     uint8_t ch;
     uint32_t count;
-    int i = 0;
+    int i;
 
-    for(; i < 256; i++){
+    for(i=0; i < 256; i++){
         if(list[i]){
             Node *node = list[i];
             ch = node->ch;
@@ -84,7 +95,9 @@ void write_header(int outfile, Node **list){
 
 
 uint8_t binary_to_hex(char *binary){
-
+    /*
+    converts binary string to a hex val...
+    */
     uint8_t size = 0;
 
     if(binary[0] == '1')
@@ -107,14 +120,17 @@ uint8_t binary_to_hex(char *binary){
 }
 
 uint8_t *convert_to_hex(char *binary){
-    /* Returns number of bytes written to buffer*/
+    /*Takes in string of 1s and 0s and converts them into uint8_t nums
+     *
+     *Returns number of bytes written to buffer
+     */
     int i=0, bytes=0;
     char *byte;
-    size_t buff = 80;
+    size_t buff = CHONK;
     uint8_t *pp;
     pp = malloc(buff);
     byte = malloc(8);
-
+    /*while binary string is not at its end, keep converting*/
     while(binary[i] != '\0'){
         byte[i%8] = binary[i];
         if(i%8 == 7){
@@ -130,17 +146,6 @@ uint8_t *convert_to_hex(char *binary){
             byte = memset(byte, 0, 7);
         }
         i++;
-    }
-    if(i%8 != 0){
-        if (bytes >= buff){
-            pp = realloc(pp, buff * 2);
-            if (!pp){
-                perror("realloc");
-                exit(1);
-            }
-            buff *= 2;
-        }
-        pp[bytes] = binary_to_hex(byte);
     }
     /*sets how many bytes to write*/
     bytes_for_file = bytes;
@@ -158,6 +163,7 @@ int main(int argc, char *argv[]){
     unsigned char *filecontents;
     char *binary;
 
+    /*usage handling*/
     if(argc < 2){
         printf("Usage: hencode infile [ outfile ]\n");
         exit(0);
@@ -198,7 +204,7 @@ int main(int argc, char *argv[]){
     /*initial write to file*/
     write(outfile, &ch_count, 4);
 
-    /*file is not empty, continue to encode*/
+    /*if file is not empty, continue to encode*/
     if(ch_count > 0){
         write_header(outfile, list);
         if (ch_count > 1){

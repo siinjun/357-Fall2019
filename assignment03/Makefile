@@ -7,10 +7,8 @@ hencode: hencode.c
 hdecode: hdecode.c
 	gcc -o hdecode $(CFLAGS) hdecode.c
 
-test : hencode
-	echo "testing hencode"
-	./a.out inputs/basic basic.mine
-	echo "done"
+test : hencode hdecode
+	./gottem.sh
 
 clean:
 	rm -rf *.o
