@@ -23,8 +23,7 @@ Node *read_header(int fd, uint32_t num_ch, Node *linked){
     uint8_t ch;
     uint32_t freq;
     uint32_t count=0;
-
-    while(count < num_ch){
+    while(count < num_ch && count < 257){
         Node *new;
         new = malloc(sizeof(Node));
         read(fd, &ch, 1);
@@ -186,6 +185,11 @@ int main(int argc, char *argv[]){
     /*checks if file size is larger than size of empty compressed file*/
     if(body_size > 4){
         read(encoded, &total_characters,4);
+        /*checks if valid file was read*/
+        if(total_characters > 256){
+            printf("Invalid input\n");
+            exit(0);
+        }
         linked = read_header(encoded, total_characters, linked);
         tree = create_tree(linked);
 
