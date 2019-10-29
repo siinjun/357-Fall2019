@@ -126,7 +126,6 @@ char *getpwd(const char *path, char *pwd){
     current = malloc(sizeof(struct stat));
     parent = malloc(sizeof(struct stat));
 
-    printf("%s\n", pwd);
     valid = stat(path, current);
     if(valid < 0){
         perror("stat()");
@@ -175,6 +174,7 @@ int main(){
     path = calloc(PATH_MAX, sizeof(char));
     parentpath = calloc(PATH_MAX, sizeof(char));
     /*path = redo(cd, NULL);*/
-    getpwd(cd, path);
+    path = getpwd(cd, path);
+    printf("%s\n", path);
     return 0;
 }
