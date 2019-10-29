@@ -1,6 +1,6 @@
 CFLAGS = -g -Wall -ansi -pedantic
 
-all: mypwd
+all: newpwd
 
-mypwd: mypwd.c
-	gcc $(CFLAGS) mypwd.c
+newpwd: newpwd.c
+	gcc $(CFLAGS) newpwd.c
