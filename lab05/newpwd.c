@@ -39,7 +39,7 @@ char *cat(const char *first, const char *two){
     cat[len1] = '/';
     for(i=0;i < len2; i++)
         cat[i+len1+1] = two[i];
-    cat[len1+len2] = '\0';
+    cat[len1+len2+2] = '\0';
     return cat;
 
 }
@@ -55,6 +55,7 @@ char *redo(const char *traversal, const char *path){
 
     current = malloc(sizeof(struct stat));
     parent = malloc(sizeof(struct stat));
+    printf("path: %s\n", path);
 
     valid = stat(traversal, current);
     tmp = strdup(traversal);
