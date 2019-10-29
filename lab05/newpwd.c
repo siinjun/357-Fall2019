@@ -8,8 +8,9 @@
 #include<string.h>
 #include<dirent.h>
 #include<errno.h>
-
+#define PATH_MAX 2018
 #define BUFF 8
+char *parentpath;
 
 char *strdup(const char *str)
 {
@@ -45,7 +46,7 @@ char *cat(const char *first, const char *two){
 }
 
 
-char *redo(const char *traversal, const char *path){
+/*char *redo(const char *traversal, const char *path){
 
     struct stat *current, *parent;
     int valid;
@@ -103,6 +104,7 @@ char *redo(const char *traversal, const char *path){
                     tmp = cat(name, tmp);
                     redo(parentpath, tmp);
                 }
+                closedir(cd);
                 return;
             }
 
@@ -111,15 +113,68 @@ char *redo(const char *traversal, const char *path){
     printf("path: %s\n", path);
     tmp = cat(root, path);
     return tmp;
-}
+}*/
 
+char *getpwd(const char *path, char *pwd){
+
+    struct stat *current, *parent;
+    int valid;
+    char *tmp, *name, *root = "/\0";
+    DIR *cd;
+    struct dirent *de;
+
+    current = malloc(sizeof(struct stat));
+    parent = malloc(sizeof(struct stat));
+
+    printf("%s\n", pwd);
+    valid = stat(path, current);
+    if(valid < 0){
+        perror("stat()");
+        exit(1);
+    }
+    tmp = strdup(path);
+    parentpath = strcat(tmp, "../\0");
+    valid = stat(parentpath, parent);
+    if(valid < 0){
+        perror("stat()");
+        exit(1);
+    }
+    if(parent->st_dev == current->st_dev){
+        cd = opendir(parentpath);
+        while((de=readdir(cd)) != NULL){
+            name = de->d_name;
+            tmp = strdup(parentpath);
+            tmp = strcat(tmp, name);
+            valid = stat(tmp, parent);
+            if (valid < 0){
+                perror("stat()");
+                exit(1);
+            }
+            if(!strcmp(name, "."))
+                break;
+            if(parent->st_ino == current->st_ino){
+                if(pwd[0] == '\0')
+                    pwd = name;
+                else
+                    pwd = cat(name, pwd);
+                name = getpwd(parentpath, pwd);
+                return name;
+            }
+        }
+    }
+    pwd = cat(root, pwd);
+    return pwd;
+}
 
 int main(){
 
     char *cd = "./\0";
     char *path;
+    DIR *wot;
 
-    path = redo(cd, NULL);
-    printf("%s\n", path);
+    path = calloc(PATH_MAX, sizeof(char));
+    parentpath = calloc(PATH_MAX, sizeof(char));
+    /*path = redo(cd, NULL);*/
+    getpwd(cd, path);
     return 0;
 }
