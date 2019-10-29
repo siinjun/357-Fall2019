@@ -33,7 +33,7 @@ char *cat(const char *first, const char *two){
     len1 = strlen(first);
     len2 = strlen(two);/*
     printf("len1: %d, len2: %d, str1: %s, str2: %s\n",len1,len2, first, two);*/
-    cat = malloc(len1 + len2 + 2);
+    cat = malloc(len1 + len2 + 3);
     for(i=0; i< len1; i++)
         cat[i]=first[i];
     cat[len1] = '/';
@@ -55,46 +55,58 @@ char *redo(const char *traversal, const char *path){
 
     current = malloc(sizeof(struct stat));
     parent = malloc(sizeof(struct stat));
-    printf("path: %s\n", path);
 
     valid = stat(traversal, current);
+    if(valid<0){
+        perror("stat()");
+        exit(1);
+    }
     tmp = strdup(traversal);
     parentpath = strcat(tmp, "../\0");
-    cd = opendir(parentpath);
-    if(errno){
-        perror("parentpath");
-        exit(2);
+    valid = stat(parentpath, parent);
+    if(valid<0){
+        perror("stat()");
+        exit(1);
     }
-    while((de=readdir(cd)) != NULL){
-        name = de->d_name;
-        tmp = strdup(parentpath);
-        strcat(tmp, name);
-        valid = stat(tmp, parent);
-        if(valid<0){
-            perror("tmp");
-            exit(1);
+    if(parent->st_dev != current->st_dev)
+        printf("diff devices\n");
+    else{
+        cd = opendir(parentpath);
+        if(errno){
+            perror("parentpath");
+            exit(2);
         }
-        if(parent->st_ino == current->st_ino && !strcmp(name, "."))
-            break;
-        if(parent->st_ino == current->st_ino &&
-            parent->st_dev == current->st_dev){
-            if(!path){
-                int len;
-                len = strlen(name);
-                tmp = strdup(name);
-                tmp = realloc(tmp, len+1);
-                tmp[len] = '/';
-                tmp[len+1] = '\0';
-                redo(parentpath, tmp);
+        while((de=readdir(cd)) != NULL){
+            name = de->d_name;
+            tmp = strdup(parentpath);
+            strcat(tmp, name);
+            valid = stat(tmp, parent);
+            if(valid<0){
+                perror("tmp");
+                exit(1);
             }
-            else{
-                tmp = strdup(path);
-                tmp = cat(name, tmp);
-                redo(parentpath, tmp);
+            if(parent->st_ino == current->st_ino && !strcmp(name, "."))
+                break;
+            if(parent->st_ino == current->st_ino &&
+                parent->st_dev == current->st_dev){
+                if(!path){
+                    int len;
+                    len = strlen(name);
+                    tmp = strdup(name);
+                    tmp = realloc(tmp, len+1);
+                    tmp[len] = '/';
+                    tmp[len+1] = '\0';
+                    redo(parentpath, tmp);
+                }
+                else{
+                    tmp = strdup(path);
+                    tmp = cat(name, tmp);
+                    redo(parentpath, tmp);
+                }
+                return;
             }
-            return;
-        }
 
+        }
     }
     printf("path: %s\n", path);
     tmp = cat(root, path);
