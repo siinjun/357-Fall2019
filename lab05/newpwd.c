@@ -31,7 +31,8 @@ char *cat(const char *first, const char *two){
     int len1,len2, i;
     char *cat;
     len1 = strlen(first);
-    len2 = strlen(two);
+    len2 = strlen(two);/*
+    printf("len1: %d, len2: %d, str1: %s, str2: %s\n",len1,len2, first, two);*/
     cat = malloc(len1 + len2 + 2);
     for(i=0; i< len1; i++)
         cat[i]=first[i];
@@ -44,14 +45,14 @@ char *cat(const char *first, const char *two){
 }
 
 
-void redo(const char *traversal, char *path){
+char *redo(const char *traversal, const char *path){
 
     struct stat *current, *parent;
     int valid;
-    char *parentpath, *tmp, *name;
+    char *parentpath, *tmp, *name, *root = "/\0";
     DIR *cd;
     struct dirent *de;
-    printf("curr path: %s, traversal = %s\n", path, traversal);
+
     current = malloc(sizeof(struct stat));
     parent = malloc(sizeof(struct stat));
 
@@ -69,10 +70,13 @@ void redo(const char *traversal, char *path){
         strcat(tmp, name);
         valid = stat(tmp, parent);
         if(valid<0){
-            perror("S");
+            perror("tmp");
             exit(1);
         }
-        if(parent->st_ino == current->st_ino){
+        if(parent->st_ino == current->st_ino && !strcmp(name, "."))
+            break;
+        if(parent->st_ino == current->st_ino &&
+            parent->st_dev == current->st_dev){
             if(!path){
                 int len;
                 len = strlen(name);
@@ -86,12 +90,14 @@ void redo(const char *traversal, char *path){
                 tmp = strdup(path);
                 tmp = cat(name, tmp);
                 redo(parentpath, tmp);
-
             }
+            return;
         }
 
     }
-    return;
+    printf("path: %s\n", path);
+    tmp = cat(root, path);
+    return tmp;
 }
 
 
@@ -99,8 +105,8 @@ int main(){
 
     char *cd = "./\0";
     char *path;
-/*
-    getpwd(cd,NULL, 0);*/
-    redo(cd, NULL);
+
+    path = redo(cd, NULL);
+    printf("%s\n", path);
     return 0;
 }
