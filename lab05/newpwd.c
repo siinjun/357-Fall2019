@@ -150,7 +150,7 @@ char *getpwd(const char *path, char *pwd){
                 perror("stat()");
                 exit(1);
             }
-            if(!strcmp(name, "."))
+            if(parent->st_ino == current->st_ino && !strcmp(name, "."))
                 break;
             if(parent->st_ino == current->st_ino){
                 if(pwd[0] == '\0')
