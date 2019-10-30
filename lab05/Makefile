@@ -1,6 +1,14 @@
 CFLAGS = -g -Wall -ansi -pedantic
 
-all: newpwd
+all: mypwd
 
-newpwd: newpwd.c
-	gcc $(CFLAGS) newpwd.c
+mypwd: mypwd.c
+	gcc -o mypwd $(CFLAGS) mypwd.c
+
+test: mypwd
+	echo "testing"
+	./mypwd
+	echo "done"
+
+clean:
+	rm *.o
