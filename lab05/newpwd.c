@@ -47,9 +47,11 @@ char *mypwd(char *path, char *pwd){
             tmp = strcat(tmp, path);
             tmp = strcat(tmp, name);
             valid = stat(tmp, parent);
-            if(parent->st_ino == current->st_ino && !strcmp(name, "."))
+            if(parent->st_ino == current->st_ino &&
+                    (!strcmp(name, "..") || !strcmp(name, ".")))
                 break;
-            if(parent->st_dev == current->st_dev && parent->st_ino == current->st_ino){
+            if(parent->st_dev == current->st_dev &&
+                    parent->st_ino == current->st_ino){
                 pwd = mypwd(path, pwd);
                 pwd = strcat(pwd, root);
                 pwd = strcat(pwd, name);
