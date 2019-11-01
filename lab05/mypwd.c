@@ -8,7 +8,7 @@
 #include<string.h>
 #include<dirent.h>
 #include<errno.h>
-#define PATH_MAX 2048
+#define path_max 2048
 bool DEBUG = false;
 
 
@@ -65,13 +65,14 @@ char * mypwd(char *pwd){
     }
     free(current);
     free(parent);
-    closedir(cd);
+    if(parent->st_dev == current->st_dev)
+        closedir(cd);
     return pwd;
 }
 int main(){
 
     char *pwd;
-    pwd = calloc(PATH_MAX, sizeof(char));
+    pwd = calloc(path_max, sizeof(char));
     pwd = mypwd(pwd);
     printf("%s\n", pwd);
     free(pwd);
