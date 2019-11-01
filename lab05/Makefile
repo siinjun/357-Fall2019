@@ -1,4 +1,4 @@
-CFLAGS = -g -Wall -ansi -pedantic
+CFLAGS = -g -Wall -pedantic
 
 all: mypwd
 
