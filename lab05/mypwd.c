@@ -74,7 +74,11 @@ int main(){
     char *pwd;
     pwd = calloc(path_max, sizeof(char));
     pwd = mypwd(pwd);
-    printf("%s\n", pwd);
+    if(pwd[0]=='\0'){
+        pwd[0] = '/';
+        pwd[1] = '\0';
+    }
+    puts(pwd);
     free(pwd);
     return 0;
 }
