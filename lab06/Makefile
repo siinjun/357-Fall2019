@@ -1,7 +1,7 @@
 CC = gcc
-FLAGS = -Wall -pedantic -ansi -g
+FLAGS = -Wall -pedantic -g
 
 all: timeit
 
 timeit: timeit.c
-	$(CC) timeit.c -o timeit
+	$(CC) timeit.c $(FLAGS) -o timeit
