@@ -5,6 +5,7 @@
 #include<fcntl.h>
 #include<sys/stat.h>
 #include<sys/types.h>
+#include<sys/sysmacros.h>
 #include<unistd.h>
 #include<time.h>
 #include<pwd.h>
@@ -35,7 +36,6 @@ char *get_name(char *name, char *prefix){
 char *get_mode(struct stat file){
     char *octal;
     octal = octal_2str(file.st_mode, 8);
-    printf("mode: %s\n", octal);
     return octal;
 }
 
@@ -54,17 +54,47 @@ char *get_guid(struct stat file){
 char *get_size(struct stat file){
     char *octal;
     octal = octal_2str(file.st_size, 12);
-    printf("size: %s\n", octal);
     return octal;
 }
 
-void get_mtime(){}
+char *get_mtime(struct stat file){
+    char *octal;
+    octal = octal_2str(file.st_mtime, 12);
+    return octal;
+}
 
 void get_chksum(){}
 
-void get_typeflag(){}
+char *get_typeflag(struct stat file){
+    mode_t mode = file.st_mode;
+    char *type;
+    type = malloc(1);
+    if(S_ISREG(mode))
+        type[0] = '0';
+    else if(S_ISDIR(mode))
+        type[0] = '5';
+    else
+        type[0] = '2';
+    return type;
+}
 
-void get_linkname(){}
+char *get_linkname(struct stat file, char *name){
+    /* may be wrong*/
+    if(S_ISLNK(file.st_mode)){
+        char *path;
+        int valid;
+        path = calloc(100, 1);
+        valid = readlink(name, path,100);
+        if (valid == -1){
+            perror("readlink");
+            exit(1);
+        }
+        return path;
+    }
+    else{
+        return NULL;
+    }
+}
 
 char  *get_magic(){
     char *magic;
@@ -114,11 +144,36 @@ char *get_gname(struct stat file){
     return gname;
 }
 
-void get_devmajor(){}
+char *get_devmajor(struct stat file){
+    unsigned int maj;
+    char *octal;
+    dev_t dev = file.st_dev;
 
-void get_devminor(){}
+    octal = malloc(8);
+    maj = major(dev);
+    octal = octal_2str(maj, 8);
+    return octal;
+}
 
-void get_prefix(){}
+char *get_devminor(struct stat file){
+    unsigned int min;
+    char *octal;
+    dev_t dev = file.st_dev;
+
+    octal = malloc(8);
+    min = minor(dev);
+    octal = octal_2str(min, 8);
+    return octal;
+}
+
+char *get_prefix(char *path){
+    char *prefix;
+    prefix = calloc(155, 1);
+
+    prefix = strcpy(prefix, path);
+
+    return prefix;
+}
 
 char *create_header(struct stat file, char *name, char *path){
     char *header;
@@ -130,6 +185,13 @@ char *create_header(struct stat file, char *name, char *path){
     get_uid(file);
     get_guid(file);
     get_size(file);
+    get_mtime(file);
+
+    get_typeflag(file);
+    get_linkname(file,name);
+    get_devmajor(file);
+    get_devminor(file);
+    get_prefix(path);
     return header;
 }
 
