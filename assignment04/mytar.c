@@ -12,25 +12,49 @@
 #include<string.h>
 #include<dirent.h>
 #include<grp.h>
+#include "header.h"
 
 #define DEBUG false
 
+bool val_head = true;
+int P_FLG = 0;
+
 char *octal_2str(int octal, int length){
     char *str;
-    str = calloc(1, length);
+    str = calloc(length, 1);
     sprintf(str, "%o", octal);
 
     return str;
 }
 char *get_name(char *name, char *prefix){
-
-    if(strlen(prefix)){
-        strcat(prefix,"/");
-        strcat(prefix,name);
-        return prefix;
-    }else{
-        return name;
+    /*will redo this one later*/
+    char *path;
+    int len;
+    path = calloc(100, 1);
+    memset(path, 0, 100);
+    /*increase head of path by 155 chars, if get_prefix func was used*/
+    if(P_FLG){
+        prefix += 155;
+        P_FLG = 0;
     }
+    if((len = strlen(prefix))){
+        memcpy(path, prefix,len);
+        len += strlen(name);
+        /*if invalid*/
+        if(len > 100){
+            val_head = false;
+            free(path);
+            return NULL;
+        }
+        strcat(path, name);
+    }
+    else{
+        len = strlen(prefix);
+        memcpy(path, prefix, len);
+
+        strcat(path, name);
+    }
+    return path;
 }
 
 char *get_mode(struct stat file){
@@ -78,22 +102,21 @@ char *get_typeflag(struct stat file){
     return type;
 }
 
-char *get_linkname(struct stat file, char *name){
+char *get_linkname(char *name){
     /* may be wrong*/
-    if(S_ISLNK(file.st_mode)){
-        char *path;
-        int valid;
-        path = calloc(100, 1);
-        valid = readlink(name, path,100);
-        if (valid == -1){
-            perror("readlink");
-            exit(1);
-        }
-        return path;
+    char *path;
+    int valid;
+    path = calloc(105, 1);
+    valid = readlink(name, path,100);
+    if (valid == -1){
+        perror("readlink");
+        exit(1);
     }
-    else{
+    if(strlen(path) > 100){
+        val_head = false;
         return NULL;
     }
+    return path;
 }
 
 char  *get_magic(){
@@ -117,7 +140,6 @@ char *get_version(){
 
     version[0] = '0';
     version[1] = '0';
-
     return version;
 }
 
@@ -168,48 +190,86 @@ char *get_devminor(struct stat file){
 
 char *get_prefix(char *path){
     char *prefix;
+    int len;
     prefix = calloc(155, 1);
-
-    prefix = strcpy(prefix, path);
-
+    len = strlen(path);
+    memcpy(prefix, path, len);
+    P_FLG = 1;
     return prefix;
 }
 
-char *create_header(struct stat file, char *name, char *path){
-    char *header;
+struct header create_header(struct stat file, char *name, char *path){
+    struct header head;
+    char *tmp;
+    int i = 0;
 
-    header = calloc(512, sizeof(char));
-    get_name(name, path);
-    get_mode(file);
-    get_uname(file);
-    get_uid(file);
-    get_guid(file);
-    get_size(file);
-    get_mtime(file);
-
-    get_typeflag(file);
-    get_linkname(file,name);
-    get_devmajor(file);
-    get_devminor(file);
-    get_prefix(path);
-    return header;
+    val_head = true;
+    for(;i<1;i++){
+        if(strlen(path) <= 100){
+            head.name = get_name(name, path);
+            head.prefix = NULL;
+        }
+        else{
+            head.prefix = get_prefix(path);
+            tmp = get_name(path,name);
+            if(!tmp){
+                val_head = false;
+                break;
+            }else{
+                head.name = tmp;
+            }
+        }
+        head.mode = get_mode(file);
+        head.uname = get_uname(file);
+        head.uid = get_uid(file);
+        head.gid = get_guid(file);
+        head.size = get_size(file);
+        head.mtime = get_mtime(file);
+        head.version = get_version();
+        head.typeflag = get_typeflag(file);
+        if(S_ISLNK(file.st_mode)){
+            head.linkname = get_linkname(name);
+        }else{
+            head.linkname = NULL;
+        }
+        head.devmajor = get_devmajor(file);
+        head.devminor = get_devminor(file);
+    }
+    if(DEBUG)
+        printf("path: %s\n", head.name);
+    return head;
 }
+void write_to_file(struct header head, struct stat file, char *name){
+    /* write to argv[2] but for now use test.tar*/
+    char *cont;
+    size_t size = file.st_size;
+    int fd, od;
 
-void traverse_dir(char *path){
+    cont = malloc(size);
+    fd = open("test.ta", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    write(fd, head, 512);
+    od = open(name, O_RDONLY);
+    read(od, cont, size);
+    write(fd, cont, size);
+}
+void traverse_dir(char *dir_name, char *path){
 
     struct dirent *de;
     struct stat curr;
+    struct header head;
     DIR *dir;
-    char *name;
+    char *name, *new_path;
     int valid;
 
     de = malloc(sizeof(struct dirent));
-
-    if(!strlen(path)){
-        dir = opendir(".");
-    } else{
-        dir = opendir(path);
+    if(strlen(path)){
+        valid = chdir(dir_name);
+        if(valid == -1){
+            perror("chdir");
+            exit(1);
+        }
     }
+    dir = opendir(".");
     while((de = readdir(dir)) != NULL){
         name = de->d_name;
         valid = lstat(name, &curr);
@@ -217,15 +277,34 @@ void traverse_dir(char *path){
             perror("lstat");
             exit(1);
         }
-        create_header(curr, name, path);
+        head = create_header(curr, name, path);
+        /*check if valid header*/
+        if(val_head){
+            write_to_file(head, curr, name);
+            break;
+        }
+        /*dont recurse if "." or ".."*/
+        if((S_ISDIR(curr.st_mode) && strcmp(name, ".")) &&
+                (S_ISDIR(curr.st_mode) && strcmp(name, ".."))){
+            dir_name = name;
+            new_path = strdup(path);
+            new_path = strcat(new_path, name);
+            new_path = strcat(new_path,"/");
+            traverse_dir(dir_name, new_path);
+
+            /*go back to where u came from*/
+            chdir("..");
+        }
     }
+    closedir(dir);
 }
 
 int main(int argc, char *argv[]){
     char *path =NULL;
-    path = calloc(100, 1);
+    char *cd = NULL;
+    path = calloc(256, 1);
 
-    traverse_dir(path);
+    traverse_dir(cd, path);
 
     return 0;
 }
