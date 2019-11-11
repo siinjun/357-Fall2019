@@ -7,3 +7,6 @@ mytar: mytar.c
 
 ustar: ustarformat.c
 	gcc $(FLAGS) ustarformat.c -c
+
+header: header.h
+	gcc $(FLAGS) header.h -c

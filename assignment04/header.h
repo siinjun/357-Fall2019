@@ -2,22 +2,22 @@
 #define _header_tar
 
 struct __attribute__ ((__packed__)) header{
-    char *name;
-    char *mode;
-    char *uid;
-    char *gid;
-    char *size;
-    char *mtime;
-    char *chksum;
-    char *typeflag;
-    char *linkname;
-    char *magic;
-    char *version;
-    char *uname;
-    char *gname;
-    char *devmajor;
-    char *devminor;
-    char *prefix;
+    char name[100];
+    char mode[8];
+    char uid[8];
+    char gid[8];
+    char size[12];
+    char mtime[12];
+    char chksum[8];
+    char typeflag;
+    char linkname[100];
+    char magic[6];
+    char version[2];
+    char uname[32];
+    char gname[32];
+    char devmajor[8];
+    char devminor[8];
+    char prefix[155];
 };
 
 #endif

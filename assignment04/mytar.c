@@ -87,18 +87,21 @@ char *get_mtime(struct stat file){
     return octal;
 }
 
-void get_chksum(){}
+char *get_chksum(){
+    char *octal;
+    octal = octal_2str(500, 8);
+    return octal;
+}
 
-char *get_typeflag(struct stat file){
+char get_typeflag(struct stat file){
     mode_t mode = file.st_mode;
-    char *type;
-    type = malloc(1);
+    char type;
     if(S_ISREG(mode))
-        type[0] = '0';
+        type = '0';
     else if(S_ISDIR(mode))
-        type[0] = '5';
+        type = '5';
     else
-        type[0] = '2';
+        type = '2';
     return type;
 }
 
@@ -149,7 +152,6 @@ char *get_uname(struct stat file){
 
     pw = malloc(sizeof(struct passwd));
     pw = getpwuid(file.st_uid);
-
     uname = malloc(32);
     memcpy(uname, pw->pw_name, 32);
     return uname;
@@ -202,57 +204,92 @@ struct header create_header(struct stat file, char *name, char *path){
     struct header head;
     char *tmp;
     int i = 0;
-
+    /*initialize struct to 0*/
+    memset(&head, 0, sizeof(struct header));
+    /*initialize that file may be used for valid header*/
     val_head = true;
     for(;i<1;i++){
         if(strlen(path) <= 100){
-            head.name = get_name(name, path);
-            head.prefix = NULL;
+            strcpy(head.name, get_name(name, path));
         }
         else{
-            head.prefix = get_prefix(path);
+            strcpy(head.prefix, get_prefix(path));
             tmp = get_name(path,name);
             if(!tmp){
                 val_head = false;
                 break;
             }else{
-                head.name = tmp;
+                strcpy(head.name, tmp);
             }
         }
-        head.mode = get_mode(file);
-        head.uname = get_uname(file);
-        head.uid = get_uid(file);
-        head.gid = get_guid(file);
-        head.size = get_size(file);
-        head.mtime = get_mtime(file);
-        head.version = get_version();
-        head.typeflag = get_typeflag(file);
+        strcpy(head.mode, get_mode(file));
+        strcpy(head.uid, get_uid(file));
+        strcpy(head.gid, get_guid(file));
+        strcpy(head.size, get_size(file));
+        strcpy(head.mtime, get_mtime(file));
+        strcpy(head.chksum, get_chksum());
         if(S_ISLNK(file.st_mode)){
-            head.linkname = get_linkname(name);
-        }else{
-            head.linkname = NULL;
+            strcpy(head.linkname, get_linkname(name));
         }
-        head.devmajor = get_devmajor(file);
-        head.devminor = get_devminor(file);
+        strcpy(head.magic, get_magic());
+        strcpy(head.version, get_version());
+        strcpy(head.uname, get_uname(file));
+        strcpy(head.gname, get_gname(file));
+        head.typeflag = get_typeflag(file);
+        strcpy(head.devmajor, get_devmajor(file));
+        strcpy(head.devminor, get_devminor(file));
     }
-    if(DEBUG)
-        printf("path: %s\n", head.name);
+    if(DEBUG){
+        printf("path/name: %s\n", head.name);
+        printf("mode: %s\n", head.mode);
+        printf("uid: %s\n", head.uid);
+        printf("gid: %s\n", head.gid);
+        printf("size: %s\n", head.size);
+        printf("mtime: %s\n", head.mtime);
+        printf("chcksum %s\n", head.chksum);
+        printf("typeflag: %c\n", head.typeflag);
+        printf("linkename: %s\n", head.linkname);
+        printf("magic: %s\n", head.magic);
+        printf("version: %s\n", head.version);
+        printf("uname: %s\n", head.uname);
+        printf("gname: %s\n", head.gname);
+        printf("devmajor: %s\n", head.devmajor);
+        printf("devminor: %s\n", head.devminor);
+
+    }
     return head;
 }
-void write_to_file(struct header head, struct stat file, char *name){
+
+
+void write_to_file(struct header head, struct stat file, char *name, int fd){
     /* write to argv[2] but for now use test.tar*/
-    char *cont;
+    char *cont, *bp;
     size_t size = file.st_size;
-    int fd, od;
+    int od, leftover;
 
     cont = malloc(size);
-    fd = open("test.ta", O_WRONLY | O_CREAT | O_TRUNC, 0644);
-    write(fd, head, 512);
+    write(fd, &head, sizeof(head));
+    lseek(fd, 12, SEEK_CUR);
+    /*get contents of file*/
     od = open(name, O_RDONLY);
     read(od, cont, size);
+    /*write contents of file to new file*/
     write(fd, cont, size);
+
+    leftover = size % 512;
+    bp = calloc(leftover,1);
+    write(fd, bp, leftover);
 }
-void traverse_dir(char *dir_name, char *path){
+
+void end_padding(int fd){
+    /*pad ending with two blocks of 512 Bytes*/
+    char *zero;
+    zero = calloc(1024, 1);
+
+    write(fd, zero, 1024);
+}
+
+void traverse_dir(char *dir_name, char *path, int fd){
 
     struct dirent *de;
     struct stat curr;
@@ -280,7 +317,7 @@ void traverse_dir(char *dir_name, char *path){
         head = create_header(curr, name, path);
         /*check if valid header*/
         if(val_head){
-            write_to_file(head, curr, name);
+            write_to_file(head, curr, name, fd);
             break;
         }
         /*dont recurse if "." or ".."*/
@@ -290,7 +327,7 @@ void traverse_dir(char *dir_name, char *path){
             new_path = strdup(path);
             new_path = strcat(new_path, name);
             new_path = strcat(new_path,"/");
-            traverse_dir(dir_name, new_path);
+            traverse_dir(dir_name, new_path, fd);
 
             /*go back to where u came from*/
             chdir("..");
@@ -302,9 +339,11 @@ void traverse_dir(char *dir_name, char *path){
 int main(int argc, char *argv[]){
     char *path =NULL;
     char *cd = NULL;
+    int fd;
+    fd = open("test.ta", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     path = calloc(256, 1);
 
-    traverse_dir(cd, path);
-
+    traverse_dir(cd, path, fd);
+    end_padding(fd);
     return 0;
 }
