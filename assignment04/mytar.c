@@ -13,8 +13,10 @@
 #include<dirent.h>
 #include<grp.h>
 #include "header.h"
+#include "ustarformat.c"
 
-#define DEBUG false
+#define DEBUG true
+#define OCTAL_LIMIT 16777215
 
 bool val_head = true;
 int P_FLG = 0;
@@ -65,7 +67,21 @@ char *get_mode(struct stat file){
 
 char *get_uid(struct stat file){
     char *octal;
-    octal = octal_2str(file.st_uid, 8);
+    /*
+    uid_t uid = file.st_uid;
+    */
+    uid_t uid = 16777216;
+    if(uid < OCTAL_LIMIT){
+        octal = octal_2str(uid, 8);
+    }else{
+        /*FIX ME*/
+        int valid;
+        octal = calloc(8,1);
+        valid = insert_special_int(octal, 8, uid);
+        if(valid){
+            perror("Bad uid");
+        }
+    }
     return octal;
 }
 
@@ -87,9 +103,20 @@ char *get_mtime(struct stat file){
     return octal;
 }
 
-char *get_chksum(){
+char *get_chksum(struct header header){
+    char *hp;
     char *octal;
-    octal = octal_2str(500, 8);
+    /*initialized w 8 bc chksum assumed to be all spaces*/
+    int i,chars = 8;
+
+    hp = (char*)&header;
+    for(i=0; i < sizeof(struct header); i++){
+        if(hp[i] != 0){
+            chars++;
+        }
+    }
+    printf("chksum: %d\n", chars);
+    octal = octal_2str(chars, 8);
     return octal;
 }
 
@@ -227,7 +254,6 @@ struct header create_header(struct stat file, char *name, char *path){
         strcpy(head.gid, get_guid(file));
         strcpy(head.size, get_size(file));
         strcpy(head.mtime, get_mtime(file));
-        strcpy(head.chksum, get_chksum());
         if(S_ISLNK(file.st_mode)){
             strcpy(head.linkname, get_linkname(name));
         }
@@ -238,6 +264,7 @@ struct header create_header(struct stat file, char *name, char *path){
         head.typeflag = get_typeflag(file);
         strcpy(head.devmajor, get_devmajor(file));
         strcpy(head.devminor, get_devminor(file));
+        strcpy(head.chksum, get_chksum(head));
     }
     if(DEBUG){
         printf("path/name: %s\n", head.name);

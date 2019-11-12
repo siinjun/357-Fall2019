@@ -1,6 +1,7 @@
 #include<arpa/inet.h>
 #include<string.h>
-
+#include<stdio.h>
+#include<unistd.h>
 uint32_t extract_special_int(char *where, int len){
 
     int32_t val = -1;
@@ -16,7 +17,7 @@ int insert_special_int(char *where, size_t size, int32_t val){
 
     int err=0;
 
-    if(val<0 || sizeof(val))
+    if(val<0 || size < sizeof(val))
         err++;
     else{
         memset(where,0,size);

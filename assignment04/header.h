@@ -20,4 +20,6 @@ struct __attribute__ ((__packed__)) header{
     char prefix[155];
 };
 
+uint32_t extract_special_int(char *where, int len);
+int insert_special_int(char *where, size_t size, int32_t val);
 #endif

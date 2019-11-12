@@ -1,6 +1,6 @@
 FLAGS = -g -Wall -pedantic
 
-all: mytar
+all: mytar ustar table
 
 mytar: mytar.c
 	gcc $(FLAGS) mytar.c -o mytar
@@ -8,5 +8,5 @@ mytar: mytar.c
 ustar: ustarformat.c
 	gcc $(FLAGS) ustarformat.c -c
 
-header: header.h
-	gcc $(FLAGS) header.h -c
+table: table.c
+	gcc $(FLAGS) table.c -o tabletar
