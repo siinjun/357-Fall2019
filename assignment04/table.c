@@ -14,7 +14,7 @@
 #include<grp.h>
 #include "header.h"
 #include "ustarformat.c"
-
+#define BLOCK 512
 int V_FLG = 0;
 int str_2oct(char *octal){
     /*FIXME middle nulls*/
@@ -62,9 +62,10 @@ char *get_perms(struct header head){
     memset(perms, 45, 10);
     octal = head.mode;
     mode = str_2oct(octal);
-    printf("perms b4: %s\n", perms);
-    if(S_ISDIR(mode))
+    if(head.typeflag == '5')
         perms[0] = 'd';
+    else if(head.typeflag == '2')
+        perms[0] = 'l';
     if(S_IRUSR & mode)
         perms[1] = 'r';
     if(S_IWUSR & mode)
@@ -87,21 +88,59 @@ char *get_perms(struct header head){
     return perms;
 }
 
-void read_tar(int fd){
-    struct header hd;
-    char *perms;
-    /*get tar header into struct header*/
-    read(fd, &hd, sizeof(struct header));
+int get_size(struct header head){
+    int size;
 
-    perms = get_perms(hd);
+    size= str_2oct(head.size);
+    return size;
 }
+
+void read_v_headers(int fd){
+    struct header hd;
+    char *perms, *owner, *mtime, *filename;
+    bool done = false;
+    int blocks, empty=0, size;
+    while(!done){
+        /*get tar header into struct header*/
+        owner = calloc(17, 1);
+        read(fd, &hd, sizeof(struct header));
+        lseek(fd, 12, SEEK_CUR);
+        if(hd.name[0]){
+            empty = 0;
+            perms = get_perms(hd);
+            size = get_size(hd);
+            owner = strcpy(owner, hd.uname);
+            owner = strcat(owner, "/");
+            owner = strcat(owner, hd.gname);
+            printf("owner: %s\n", owner);
+            if(perms[0] != 'd' && perms[0] != 'l'){
+                blocks = size / BLOCK;
+                lseek(fd, (blocks+1)*BLOCK, SEEK_CUR);
+            }
+        }
+        else{
+            if(++empty == 2)
+                done = true;
+        }
+        free(owner);
+    }
+}
+
+void read_header(int fd){
+    struct header hd;
+    bool done = false;
+
+
+
+}
+
 int main(int argc, char *argv[]){
 
     int fd;
 
     /*FIXME*/
     fd = open(argv[1], O_RDONLY, 0644);
-    read_tar(fd);
+    read_v_headers(fd);
     return 0;
 
 }
