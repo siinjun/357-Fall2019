@@ -27,12 +27,15 @@ int main(int argc, char * argv[]){
     int num = 0;
 
 
-    if(argc > 2 || argc == 1)
+    if(argc > 2 || argc == 1){
+        printf("usage: timeit <seconds>\n");
         valid = false;
+    }
     if(valid){
         repeat = 2 * strtol(argv[1],&endptr,10);
         if(*endptr != '\0'){
             printf("%s: malformed time.\n", argv[1]);
+            printf("usage: timeit <seconds>\n");
             valid = false;
         }
         if(valid){
@@ -58,7 +61,5 @@ int main(int argc, char * argv[]){
             write(0,"Time's up!\n",11);
         }
     }
-    else
-        printf("usage: timeit <seconds>\n");
     return 0;
 }
