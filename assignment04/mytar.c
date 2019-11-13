@@ -16,7 +16,7 @@
 #include "ustarformat.c"
 
 #define DEBUG true
-#define OCTAL_LIMIT 16777215
+#define OCTAL_LIMIT 2097151
 
 bool val_head = true;
 int P_FLG = 0;
@@ -27,11 +27,14 @@ char *octal_2str(int octal, int length){
 
     str = calloc(length, 1);
     sprintf(str, "%o", octal);
-    padded = calloc(length,1);
-    zero = length - strlen(str) - 1;
-    memset(padded, 48, zero);
-    padded = strcat(padded, str);
-    return padded;
+    if(!str[8] && !str[7]){
+        padded = calloc(length,1);
+        zero = length - strlen(str) - 1;
+        memset(padded, 48, zero);
+        padded = strcat(padded, str);
+        return padded;
+    }
+    return str;
 }
 char *get_name(char *name, char *prefix){
     /*will redo this one later*/
@@ -73,9 +76,6 @@ char *get_mode(struct stat file){
 char *get_uid(struct stat file){
     char *octal;
     uid_t uid = file.st_uid;
-    /*
-    uid_t uid = 16777216;
-    */
     if(uid < OCTAL_LIMIT){
         octal = octal_2str(uid, 8);
     }else{
@@ -255,7 +255,7 @@ struct header create_header(struct stat file, char *name, char *path){
             }
         }
         strcpy(head.mode, get_mode(file));
-        strcpy(head.uid, get_uid(file));
+        memcpy(head.uid, get_uid(file),8);
         strcpy(head.gid, get_guid(file));
         strcpy(head.size, get_size(file));
         strcpy(head.mtime, get_mtime(file));
@@ -295,7 +295,7 @@ struct header create_header(struct stat file, char *name, char *path){
 
 void write_to_file(struct header head, struct stat file, char *name, int fd){
     /* write to argv[2] but for now use test.tar*/
-    char *cont, *bp;
+    char *cont;
     size_t size = file.st_size;
     int od, leftover;
 
@@ -309,8 +309,8 @@ void write_to_file(struct header head, struct stat file, char *name, int fd){
     write(fd, cont, size);
 
     leftover = size % 512;
-    bp = calloc(leftover,1);
-    write(fd, bp, leftover);
+    leftover = 512 - leftover;
+    lseek(fd, leftover, SEEK_CUR);
 }
 
 void end_padding(int fd){
