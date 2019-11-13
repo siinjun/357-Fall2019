@@ -22,11 +22,16 @@ bool val_head = true;
 int P_FLG = 0;
 
 char *octal_2str(int octal, int length){
-    char *str;
+    char *str, *padded;
+    int zero;
+
     str = calloc(length, 1);
     sprintf(str, "%o", octal);
-
-    return str;
+    padded = calloc(length,1);
+    zero = length - strlen(str) - 1;
+    memset(padded, 48, zero);
+    padded = strcat(padded, str);
+    return padded;
 }
 char *get_name(char *name, char *prefix){
     /*will redo this one later*/
@@ -67,10 +72,10 @@ char *get_mode(struct stat file){
 
 char *get_uid(struct stat file){
     char *octal;
-    /*
     uid_t uid = file.st_uid;
-    */
+    /*
     uid_t uid = 16777216;
+    */
     if(uid < OCTAL_LIMIT){
         octal = octal_2str(uid, 8);
     }else{
