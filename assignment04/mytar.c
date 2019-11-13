@@ -15,7 +15,7 @@
 #include "header.h"
 #include "ustarformat.c"
 
-#define DEBUG true
+#define DEBUG false
 #define OCTAL_LIMIT 2097151
 
 bool val_head = true;
@@ -110,17 +110,16 @@ char *get_mtime(struct stat file){
 
 char *get_chksum(struct header header){
     char *hp;
-    char *octal;
+    char *octal, space = ' ';
     /*initialized w 8 bc chksum assumed to be all spaces*/
-    int i,chars = 8;
+    int i,chars = 8 * (int)space;
 
     hp = (char*)&header;
     for(i=0; i < sizeof(struct header); i++){
         if(hp[i] != 0){
-            chars++;
+            chars += (unsigned char)hp[i];
         }
     }
-    printf("chksum: %d\n", chars);
     octal = octal_2str(chars, 8);
     return octal;
 }
@@ -202,23 +201,25 @@ char *get_gname(struct stat file){
 
 char *get_devmajor(struct stat file){
     unsigned int maj;
-    char *octal;
+    char *octal=NULL;
     dev_t dev = file.st_dev;
 
     octal = malloc(8);
     maj = major(dev);
-    octal = octal_2str(maj, 8);
+    if(maj)
+        octal = octal_2str(maj, 8);
     return octal;
 }
 
 char *get_devminor(struct stat file){
     unsigned int min;
-    char *octal;
+    char *octal=NULL;
     dev_t dev = file.st_dev;
 
     octal = malloc(8);
     min = minor(dev);
-    octal = octal_2str(min, 8);
+    if(min)
+        octal = octal_2str(min, 8);
     return octal;
 }
 
@@ -255,9 +256,11 @@ struct header create_header(struct stat file, char *name, char *path){
             }
         }
         strcpy(head.mode, get_mode(file));
-        memcpy(head.uid, get_uid(file),8);
-        strcpy(head.gid, get_guid(file));
-        strcpy(head.size, get_size(file));
+        memcpy(head.uid, get_uid(file), 8);
+        memcpy(head.gid, get_guid(file), 8);
+        if(S_ISREG(file.st_mode)){
+            strcpy(head.size, get_size(file));
+        }
         strcpy(head.mtime, get_mtime(file));
         if(S_ISLNK(file.st_mode)){
             strcpy(head.linkname, get_linkname(name));
@@ -302,15 +305,18 @@ void write_to_file(struct header head, struct stat file, char *name, int fd){
     cont = malloc(size);
     write(fd, &head, sizeof(head));
     lseek(fd, 12, SEEK_CUR);
-    /*get contents of file*/
-    od = open(name, O_RDONLY);
-    read(od, cont, size);
-    /*write contents of file to new file*/
-    write(fd, cont, size);
+    /*if reg file*/
+    if(!S_ISDIR(file.st_mode) && !S_ISLNK(file.st_mode)){
+        /*get contents of file*/
+        od = open(name, O_RDONLY);
+        read(od, cont, size);
+        /*write contents of file to new file*/
+        write(fd, cont, size);
 
-    leftover = size % 512;
-    leftover = 512 - leftover;
-    lseek(fd, leftover, SEEK_CUR);
+        leftover = size % 512;
+        leftover = 512 - leftover;
+        lseek(fd, leftover, SEEK_CUR);
+    }
 }
 
 void end_padding(int fd){
@@ -341,6 +347,7 @@ void traverse_dir(char *dir_name, char *path, int fd){
     dir = opendir(".");
     while((de = readdir(dir)) != NULL){
         name = de->d_name;
+        name = "nicotar";
         valid = lstat(name, &curr);
         if(valid < 0){
             perror("lstat");
