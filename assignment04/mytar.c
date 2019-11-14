@@ -69,7 +69,9 @@ char *get_name(char *name, char *prefix){
 
 char *get_mode(struct stat file){
     char *octal;
-    octal = octal_2str(file.st_mode, 8);
+    int mode;
+    mode = file.st_mode & 0777;
+    octal = octal_2str(mode, 8);
     return octal;
 }
 
@@ -79,7 +81,6 @@ char *get_uid(struct stat file){
     if(uid < OCTAL_LIMIT){
         octal = octal_2str(uid, 8);
     }else{
-        /*FIX ME*/
         int valid;
         octal = calloc(8,1);
         valid = insert_special_int(octal, 8, uid);
@@ -92,7 +93,17 @@ char *get_uid(struct stat file){
 
 char *get_guid(struct stat file){
     char *octal;
-    octal = octal_2str(file.st_uid, 8);
+    gid_t gid= file.st_gid;
+    if(gid < OCTAL_LIMIT){
+        octal = octal_2str(gid, 8);
+    }else{
+        int valid;
+        octal = calloc(8,1);
+        valid = insert_special_int(octal, 8, gid);
+        if(valid){
+            perror("Bad gid");
+        }
+    }
     return octal;
 }
 
@@ -202,9 +213,9 @@ char *get_gname(struct stat file){
 char *get_devmajor(struct stat file){
     unsigned int maj;
     char *octal=NULL;
-    dev_t dev = file.st_dev;
 
-    octal = malloc(8);
+    dev_t dev = file.st_rdev;
+    octal = calloc(1,8);
     maj = major(dev);
     if(maj)
         octal = octal_2str(maj, 8);
@@ -214,9 +225,9 @@ char *get_devmajor(struct stat file){
 char *get_devminor(struct stat file){
     unsigned int min;
     char *octal=NULL;
-    dev_t dev = file.st_dev;
 
-    octal = malloc(8);
+    dev_t dev = file.st_rdev;
+    octal = calloc(1,8);
     min = minor(dev);
     if(min)
         octal = octal_2str(min, 8);
@@ -296,12 +307,14 @@ struct header create_header(struct stat file, char *name, char *path){
 }
 
 
-void write_to_file(struct header head, struct stat file, char *name, int fd){
+void write_to_file(struct header head, struct stat file,
+                    char *name, int fd, int bd){
     /* write to argv[2] but for now use test.tar*/
     char *cont;
     size_t size = file.st_size;
     int od, leftover;
 
+    fchdir(bd);
     cont = malloc(size);
     write(fd, &head, sizeof(head));
     lseek(fd, 12, SEEK_CUR);
@@ -327,7 +340,7 @@ void end_padding(int fd){
     write(fd, zero, 1024);
 }
 
-void traverse_dir(char *dir_name, char *path, int fd){
+void traverse_dir(char *dir_name, char *path, int fd, int begin_dir){
 
     struct dirent *de;
     struct stat curr;
@@ -347,7 +360,6 @@ void traverse_dir(char *dir_name, char *path, int fd){
     dir = opendir(".");
     while((de = readdir(dir)) != NULL){
         name = de->d_name;
-        name = "nicotar";
         valid = lstat(name, &curr);
         if(valid < 0){
             perror("lstat");
@@ -356,8 +368,11 @@ void traverse_dir(char *dir_name, char *path, int fd){
         head = create_header(curr, name, path);
         /*check if valid header*/
         if(val_head){
-            write_to_file(head, curr, name, fd);
-            break;
+            int cur_dir;
+            cur_dir = open(".", O_RDONLY);
+            write_to_file(head, curr, name, fd, begin_dir);
+            fchdir(cur_dir);
+            close(cur_dir);
         }
         /*dont recurse if "." or ".."*/
         if((S_ISDIR(curr.st_mode) && strcmp(name, ".")) &&
@@ -366,7 +381,7 @@ void traverse_dir(char *dir_name, char *path, int fd){
             new_path = strdup(path);
             new_path = strcat(new_path, name);
             new_path = strcat(new_path,"/");
-            traverse_dir(dir_name, new_path, fd);
+            traverse_dir(dir_name, new_path, fd, begin_dir);
 
             /*go back to where u came from*/
             chdir("..");
@@ -378,11 +393,13 @@ void traverse_dir(char *dir_name, char *path, int fd){
 int main(int argc, char *argv[]){
     char *path =NULL;
     char *cd = NULL;
-    int fd;
-    fd = open("test.ta", O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    int fd, begin_dir;
+
+    begin_dir = open(".", O_RDONLY);
+    fd = open("test.tar", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     path = calloc(256, 1);
 
-    traverse_dir(cd, path, fd);
+    traverse_dir(cd, path, fd, begin_dir);
     end_padding(fd);
     return 0;
 }
