@@ -116,7 +116,7 @@ char *get_chksum(struct header header){
 
     hp = (char*)&header;
     for(i=0; i < sizeof(struct header); i++){
-        if(hp[i] != 0){
+        if(hp[i] != '\0'){
             chars += (unsigned char)hp[i];
         }
     }
@@ -347,7 +347,6 @@ void traverse_dir(char *dir_name, char *path, int fd){
     dir = opendir(".");
     while((de = readdir(dir)) != NULL){
         name = de->d_name;
-        name = "nicotar";
         valid = lstat(name, &curr);
         if(valid < 0){
             perror("lstat");
