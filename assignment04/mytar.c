@@ -127,7 +127,7 @@ char *get_chksum(struct header header){
 
     hp = (char*)&header;
     for(i=0; i < sizeof(struct header); i++){
-        if(hp[i] != 0){
+        if(hp[i] != '\0'){
             chars += (unsigned char)hp[i];
         }
     }
