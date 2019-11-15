@@ -209,11 +209,23 @@ void read_v_headers(int fd, int v_flg){
     }
 }
 
+int table(int v_flg, char *argv[]){
+    int fd;
 
+    fd = open(argv[2], O_RDONLY, 0644);
+    if(fd==-1){
+        perror(argv[2]);
+        exit(2);
+    } else{
+        read_v_headers(fd,v_flg);
+    }
+    return 0;
+}
 int main(int argc, char *argv[]){
 
     int fd, v_flg=1;
 
+    
     /*FIXME*/
     fd = open(argv[1], O_RDONLY, 0644);
     read_v_headers(fd,v_flg);
