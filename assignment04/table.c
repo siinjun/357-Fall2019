@@ -104,7 +104,7 @@ char *get_name(struct header hd){
         name = strncat(name, hd.name,100);
     }
     else{
-        name = strncat(name, hd.name,100);
+        name = strncpy(name, hd.name,100);
     }
 
     return name;

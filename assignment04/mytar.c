@@ -262,8 +262,8 @@ void get_name_pre(struct stat file, struct header *head,
         if(count<=100){
             strncpy(head->name, tmp,count);
         }
-        else if((pref+count)<=155 && S_ISDIR(file.st_mode)){
-            strncpy(head->prefix, tmp,count);
+        else if((pref+count-1)<=155 && S_ISDIR(file.st_mode)){
+            strncpy(head->prefix, tmp,count-1);
         }
         else{
             val_head = false;
@@ -503,7 +503,7 @@ void read_file(char *filename, int fd, int begin_dir){
     valid = lstat(filename, &curr);
     if(valid == -1){
         perror(filename);
-        exit(1);
+        return;
     }
     name = find_name(filename);
     path = find_path(filename);

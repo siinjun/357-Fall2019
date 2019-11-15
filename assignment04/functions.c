@@ -1,4 +1,4 @@
-#include "mytar.h"
+#include "header.h"
 
 void extract(int readfile, char *name){
 	char buff[512];
@@ -10,7 +10,7 @@ void extract(int readfile, char *name){
 	int i, j;
 
 	memset(buff, 0 ,512);
-	memset(namebuf, 0 , 256)
+	memset(namebuf, 0 , 256);
 
 	if(name != NULL){
 		/*read header first*/
@@ -91,7 +91,7 @@ void extract(int readfile, char *name){
 			size[i] = buff[j];
 		}
 		amount = octtodec(atoi(size));
-		if(namebuff[0]!= 0){
+		if(namebuf[0]!= 0){
 			createnewfile(buff, namebuf, readfile, amount);
 		}
 		 numblocks = amount / 512;
@@ -108,7 +108,8 @@ void extract(int readfile, char *name){
 }
 
 /*makes new thing to write to*/
-void createnewfile(char buff[512], char namebuf[256], int readfile, int amount){
+void createnewfile(char buff[512], char namebuf[256],
+                    int readfile, int amount){
 	int newfile;
 	char ch;
 	int curr = 0;
@@ -126,8 +127,8 @@ void createnewfile(char buff[512], char namebuf[256], int readfile, int amount){
 	mode = (mode_t)strtol(mod, &ptr, 8);
 	newfile = open(namebuf, O_WRONLY | O_CREAT | O_TRUNC, mode);
 	while(curr < amount){
-		read(readfile, ch, 1);
-		write(newfile, ch, 1);
+		read(readfile, &ch, 1);
+		write(newfile, &ch, 1);
 		curr++;
 	}
 }
