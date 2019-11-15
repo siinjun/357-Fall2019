@@ -132,9 +132,12 @@ char *create_verbose(char *perms,char *filename,int size,struct header head){
 
     bytes = calloc(8,1);
     sprintf(bytes, "%u", size);
+    /*len of owner*/
+    owner_len = strlen(head.uname) + strlen(head.gname) + 2;
+
     /*buf is for the total size of verbose that's allowed*/
-    buf = 256 + 10 + 17 +8 +16;
-    owner_len = strlen(head.uname) + strlen(head.gname);
+    buf = 256 + 10 + owner_len + 8 + 16;
+
     /*the padding between owner and size*/
     pad = 8 - strlen(bytes) + 1;
     space = calloc(pad,1);
@@ -209,7 +212,7 @@ void read_v_headers(int fd, int v_flg){
 
 int main(int argc, char *argv[]){
 
-    int fd, v_flg=0;
+    int fd, v_flg=1;
 
     /*FIXME*/
     fd = open(argv[1], O_RDONLY, 0644);
