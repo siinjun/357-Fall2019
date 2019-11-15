@@ -132,7 +132,7 @@ char *create_verbose(char *perms,char *filename,int size,struct header head){
 
     bytes = calloc(8,1);
     sprintf(bytes, "%u", size);
-
+    /*buf is for the total size of verbose that's allowed*/
     buf = 256 + 10 + 17 +8 +16;
 
     /*the padding between owner and size*/
@@ -211,7 +211,7 @@ int main(int argc, char *argv[]){
     int fd, v_flg=1;
 
     /*FIXME*/
-    fd = open("TestDir.tar", O_RDONLY, 0644);
+    fd = open(argv[1], O_RDONLY, 0644);
     read_v_headers(fd,v_flg);
     return 0;
 

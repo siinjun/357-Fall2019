@@ -20,7 +20,8 @@
 
 bool val_head = true;
 int P_FLG = 0;
-
+int S_FLG = 0;
+int V_FLG = 0;
 char *octal_2str(int octal, int length){
     char *str, *padded;
     int zero;
@@ -36,7 +37,7 @@ char *octal_2str(int octal, int length){
     }
     return str;
 }
-char *get_name(char *name, char *prefix){
+char *get_name(char *name, char *prefix, struct stat file){
     /*will redo this one later*/
     char *path;
     int len;
@@ -64,6 +65,9 @@ char *get_name(char *name, char *prefix){
 
         strcat(path, name);
     }
+    if(S_ISDIR(file.st_mode)){
+        path = strcat(path, "/");
+    }
     return path;
 }
 
@@ -80,18 +84,21 @@ char *get_uid(struct stat file){
     uid_t uid = file.st_uid;
     if(uid < OCTAL_LIMIT){
         octal = octal_2str(uid, 8);
-    }else{
+    }else if (!S_FLG){
         int valid;
         octal = calloc(8,1);
         valid = insert_special_int(octal, 8, uid);
         if(valid){
             perror("Bad uid");
         }
+    }else{
+        printf("octal value too long. (%o)\n", uid);
+        val_head = false;
     }
     return octal;
 }
 
-char *get_guid(struct stat file){
+char *get_gid(struct stat file){
     char *octal;
     gid_t gid= file.st_gid;
     if(gid < OCTAL_LIMIT){
@@ -254,11 +261,11 @@ struct header create_header(struct stat file, char *name, char *path){
     val_head = true;
     for(;i<1;i++){
         if(!path || strlen(path) <= 100){
-            strcpy(head.name, get_name(name, path));
+            strcpy(head.name, get_name(name, path, file));
         }
         else{
             strcpy(head.prefix, get_prefix(path));
-            tmp = get_name(path,name);
+            tmp = get_name(path,name,file);
             if(!tmp){
                 val_head = false;
                 break;
@@ -267,10 +274,21 @@ struct header create_header(struct stat file, char *name, char *path){
             }
         }
         strcpy(head.mode, get_mode(file));
-        memcpy(head.uid, get_uid(file), 8);
-        memcpy(head.gid, get_guid(file), 8);
+
+        tmp = get_uid(file);
+        if(val_head){
+            memcpy(head.uid, tmp, 8);
+        }else{break;}
+
+        tmp = get_gid(file);
+        if(val_head){
+            memcpy(head.gid, tmp, 8);
+        }else{break;}
+
         if(S_ISREG(file.st_mode)){
             strcpy(head.size, get_size(file));
+        }else{
+            strcpy(head.size, "00000000000");
         }
         strcpy(head.mtime, get_mtime(file));
         if(S_ISLNK(file.st_mode)){
@@ -310,16 +328,13 @@ struct header create_header(struct stat file, char *name, char *path){
 void write_to_file(struct header head, struct stat file,
                     char *name, int fd, int bd){
     /* write to argv[2] but for now use test.tar*/
-    char *cont, *cwd;
+    char *cont;
     size_t size = file.st_size;
     int od, leftover;
+    if(V_FLG){
+        printf("%s%s\n", head.prefix, head.name);
 
-    cwd = calloc(256, 1);
-    cwd = getcwd(cwd,256);
-    printf("cwd before writing: %s\n", cwd);
-    fchdir(bd);
-    cwd = getcwd(cwd,256);
-    printf("cwd when writing: %s\n", cwd);
+    }
     write(fd, &head, sizeof(head));
     lseek(fd, 12, SEEK_CUR);
     /*if reg file*/
@@ -328,6 +343,8 @@ void write_to_file(struct header head, struct stat file,
         /*get contents of file*/
         od = open(name, O_RDONLY);
         read(od, cont, size);
+        /*change to dir where file exists*/
+        fchdir(bd);
         /*write contents of file to new file*/
         write(fd, cont, size);
 
@@ -336,7 +353,6 @@ void write_to_file(struct header head, struct stat file,
         lseek(fd, leftover, SEEK_CUR);
         free(cont);
     }
-    free(cwd);
 }
 
 void end_padding(int fd){
@@ -399,31 +415,39 @@ void traverse_dir(char *dir_name, char *path, int fd, int begin_dir){
     dir = opendir(".");
     while((de = readdir(dir)) != NULL){
         name = de->d_name;
-        valid = lstat(name, &curr);
-        if(valid < 0){
-            perror("lstat");
-            exit(1);
-        }
-        head = create_header(curr, name, path);
-        /*check if valid header*/
-        if(val_head){
-            int cur_dir;
-            cur_dir = open(".", O_RDONLY);
-            write_to_file(head, curr, name, fd, begin_dir);
-            fchdir(cur_dir);
-            close(cur_dir);
-        }
-        /*dont recurse if "." or ".."*/
-        if((S_ISDIR(curr.st_mode) && strcmp(name, ".")) &&
-                (S_ISDIR(curr.st_mode) && strcmp(name, ".."))){
-            dir_name = name;
-            new_path = strdup(path);
-            new_path = strcat(new_path, name);
-            new_path = strcat(new_path,"/");
-            traverse_dir(dir_name, new_path, fd, begin_dir);
+        if(strcmp(name, ".") && strcmp(name, "..")){
+            valid = lstat(name, &curr);
+            if(valid < 0){
+                perror("lstat");
+                exit(1);
+            }
+            head = create_header(curr, name, path);
+            /*check if valid header*/
+            if(val_head){
+                int cur_dir;
+                cur_dir = open(".", O_RDONLY);
+                write_to_file(head, curr, name, fd, begin_dir);
+                fchdir(cur_dir);
+                close(cur_dir);
+            }
+            else{
+                printf("%s: Unable to create ", head.name);
+                printf("conforming header.  Skipping.\n");
+                fflush(stdout);
 
-            /*go back to where u came from*/
-            chdir("..");
+            }
+            val_head = true;
+            /*dont recurse if "." or ".."*/
+            if((S_ISDIR(curr.st_mode))){
+                dir_name = name;
+                new_path = strdup(path);
+                new_path = strcat(new_path, name);
+                new_path = strcat(new_path,"/");
+                traverse_dir(dir_name, new_path, fd, begin_dir);
+
+                /*go back to where u came from*/
+                chdir("..");
+            }
         }
     }
     closedir(dir);
@@ -432,9 +456,12 @@ void traverse_dir(char *dir_name, char *path, int fd, int begin_dir){
 void read_file(char *filename, int fd, int begin_dir){
     struct stat curr;
     struct header head;
-    int valid, cur_dir;
+    int valid, cur_dir, end = strlen(filename)-1;
     char *name, *path;
 
+    if(filename[end] == '/'){
+        filename[end] = '\0';
+    }
     valid = lstat(filename, &curr);
     if(valid == -1){
         perror(filename);
@@ -448,21 +475,23 @@ void read_file(char *filename, int fd, int begin_dir){
         fchdir(cur_dir);
         close(cur_dir);
     }
+    else{
+        printf("%s: Unable to create conforming header.  Skipping.\n",filename);
+        fflush(stdout);
+    }
+    val_head =true;
     name = find_name(filename);
     memcpy(path, filename, strlen(filename));
     path = strcat(path, "/");
-    if(head.typeflag == '5' && (strcmp(name, ".") || strcmp(name, ".."))){
+    if(S_ISDIR(curr.st_mode) && (strcmp(name, ".") || strcmp(name, ".."))){
         traverse_dir(name, path, fd, begin_dir);
     }
 
 }
 
 int main(int argc, char *argv[]){
-    char *path =NULL;
-    char *cd = NULL;
     int i,fd, begin_dir;
 
-    path = calloc(256, 1);
     if(argc < 3){
         printf("Usage: mytar [ctvS]f tarfile [ path [ ... ]  ]\n");
         exit(1);
@@ -470,6 +499,14 @@ int main(int argc, char *argv[]){
     else{
         begin_dir = open(".", O_RDONLY);
         fd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        for(i =0; i<strlen(argv[1]); i++){
+            if(argv[1][i] == 'S'){
+                S_FLG = 1;
+            }
+            if(argv[1][i] == 'v'){
+                V_FLG = 1;
+            }
+        }
         for(i = 3; i < argc; i++){
             read_file(argv[i], fd, begin_dir);
             fchdir(begin_dir);
