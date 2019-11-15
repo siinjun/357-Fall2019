@@ -180,8 +180,11 @@ char  *get_magic(){
     magic[2] = 't';
     magic[3] = 'a';
     magic[4] = 'r';
-    magic[5] = '\0';
-
+    if(S_FLG){
+    magic[5] = ' ';
+    }else{
+        magic[5] = '\0';
+    }
     return magic;
 
 }
@@ -482,11 +485,12 @@ void read_file(char *filename, int fd, int begin_dir){
     val_head =true;
     name = find_name(filename);
     memcpy(path, filename, strlen(filename));
-    path = strcat(path, "/");
     if(S_ISDIR(curr.st_mode) && (strcmp(name, ".") || strcmp(name, ".."))){
+        path = strcat(path, "/");
         traverse_dir(name, path, fd, begin_dir);
     }
-
+    free(path);
+    free(name);
 }
 
 int main(int argc, char *argv[]){

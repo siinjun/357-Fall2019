@@ -128,19 +128,20 @@ char *get_time(struct header head){
 char *create_verbose(char *perms,char *filename,int size,struct header head){
     char *bytes, *verbose, *owner, *space;
 
-    int buf, pad;
+    int buf, pad, owner_len;
 
     bytes = calloc(8,1);
     sprintf(bytes, "%u", size);
     /*buf is for the total size of verbose that's allowed*/
     buf = 256 + 10 + 17 +8 +16;
-
+    owner_len = strlen(head.uname) + strlen(head.gname);
     /*the padding between owner and size*/
     pad = 8 - strlen(bytes) + 1;
     space = calloc(pad,1);
     memset(space,32, pad-1);
 
-    owner = calloc(17, 1);
+    /*find out length of owner*/
+    owner = calloc(owner_len, 1);
     owner = strcpy(owner, head.uname);
     owner = strcat(owner, "/");
     owner = strcat(owner, head.gname);
@@ -151,7 +152,7 @@ char *create_verbose(char *perms,char *filename,int size,struct header head){
 
     verbose = strncat(verbose, " ", 1);
 
-    verbose = strncat(verbose, owner, 17);
+    verbose = strncat(verbose, owner, owner_len);
 
     verbose = strncat(verbose, space,pad);
 
@@ -208,7 +209,7 @@ void read_v_headers(int fd, int v_flg){
 
 int main(int argc, char *argv[]){
 
-    int fd, v_flg=1;
+    int fd, v_flg=0;
 
     /*FIXME*/
     fd = open(argv[1], O_RDONLY, 0644);
