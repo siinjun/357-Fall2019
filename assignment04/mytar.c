@@ -310,17 +310,8 @@ void get_name_pre(struct stat file, struct header *head,
         if(S_ISDIR(file.st_mode) && val_head){
             strcat(tmp, "/");
             count++;
-            if(count < 100){
-                strncpy(head->name, tmp,count);
-            }
-            else if(count + pref < 155){
-                strncat(head->prefix, tmp, count-1);
-            }
-            else{
-                val_head = false;
-            }
         }
-        else if(count<100){
+        if(count<100){
             strncpy(head->name, tmp,count);
         }
         else if((pref+count)<155 && S_ISDIR(file.st_mode)){
@@ -607,6 +598,31 @@ void read_file(char *filename, int fd, int begin_dir){
         traverse_dir(filename, path, fd, begin_dir);
     }
     free(path);
+}
+
+int creation(int v_flg, int s_flg, int argc, char *argv[]){
+
+    int begin_dir,i,fd;
+
+    if(v_flg){
+        V_FLG = 1;
+    }
+    if(s_flg){
+        S_FLG = 1;
+    }
+    begin_dir = open(".", O_RDONLY);
+    fd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+    if(fd == -1){
+        perror(argv[2]);
+        exit(1);
+    }
+    for(i = 3; i < argc; i++){
+        read_file(argv[i], fd, begin_dir);
+        fchdir(begin_dir);
+    }
+    end_padding(fd);
+
+    return 0;
 }
 
 int main(int argc, char *argv[]){

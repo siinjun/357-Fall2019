@@ -136,7 +136,7 @@ char *create_verbose(char *perms,char *filename,int size,struct header head){
     owner_len = strlen(head.uname) + strlen(head.gname) + 2;
 
     /*buf is for the total size of verbose that's allowed*/
-    buf = 256 + 10 + owner_len + 8 + 16;
+    buf = 256 + 10 + owner_len + 8 + 16 + 4;
 
     /*the padding between owner and size*/
     pad = 8 - strlen(bytes) + 1;
