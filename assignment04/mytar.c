@@ -253,7 +253,7 @@ struct header create_header(struct stat file, char *name, char *path){
     /*initialize that file may be used for valid header*/
     val_head = true;
     for(;i<1;i++){
-        if(strlen(path) <= 100){
+        if(!path || strlen(path) <= 100){
             strcpy(head.name, get_name(name, path));
         }
         else{
@@ -310,16 +310,21 @@ struct header create_header(struct stat file, char *name, char *path){
 void write_to_file(struct header head, struct stat file,
                     char *name, int fd, int bd){
     /* write to argv[2] but for now use test.tar*/
-    char *cont;
+    char *cont, *cwd;
     size_t size = file.st_size;
     int od, leftover;
 
+    cwd = calloc(256, 1);
+    cwd = getcwd(cwd,256);
+    printf("cwd before writing: %s\n", cwd);
     fchdir(bd);
-    cont = malloc(size);
+    cwd = getcwd(cwd,256);
+    printf("cwd when writing: %s\n", cwd);
     write(fd, &head, sizeof(head));
     lseek(fd, 12, SEEK_CUR);
     /*if reg file*/
     if(!S_ISDIR(file.st_mode) && !S_ISLNK(file.st_mode)){
+        cont = malloc(size);
         /*get contents of file*/
         od = open(name, O_RDONLY);
         read(od, cont, size);
@@ -329,7 +334,9 @@ void write_to_file(struct header head, struct stat file,
         leftover = size % 512;
         leftover = 512 - leftover;
         lseek(fd, leftover, SEEK_CUR);
+        free(cont);
     }
+    free(cwd);
 }
 
 void end_padding(int fd){
@@ -338,6 +345,38 @@ void end_padding(int fd){
     zero = calloc(1024, 1);
 
     write(fd, zero, 1024);
+}
+char *find_name(char *filename){
+    int i, len = strlen(filename);
+    char *name;
+
+    name = calloc(1, len);
+    for(i = len-1; i >= 0; i--){
+        if(filename[i] != '/'){
+            name[i] = filename[i];
+        }
+        else{
+            break;
+        }
+    }
+    return name;
+}
+
+char *find_path(char *filename){
+    int i, len = strlen(filename);
+    char *path;
+    path = calloc(256,1);
+
+    for(i = len -1; i >= 0; i--){
+        if(filename[i] == '/'){
+            break;
+        }
+
+    }
+    if(i != -1){
+        memcpy(path, filename, i);
+    }
+    return path;
 }
 
 void traverse_dir(char *dir_name, char *path, int fd, int begin_dir){
@@ -390,16 +429,55 @@ void traverse_dir(char *dir_name, char *path, int fd, int begin_dir){
     closedir(dir);
 }
 
+void read_file(char *filename, int fd, int begin_dir){
+    struct stat curr;
+    struct header head;
+    int valid, cur_dir;
+    char *name, *path;
+
+    valid = lstat(filename, &curr);
+    if(valid == -1){
+        perror(filename);
+        exit(1);
+    }
+    path = find_path(filename);
+    head = create_header(curr, filename, path);
+    if(val_head){
+        cur_dir = open(".", O_RDONLY);
+        write_to_file(head, curr, filename, fd, begin_dir);
+        fchdir(cur_dir);
+        close(cur_dir);
+    }
+    name = find_name(filename);
+    memcpy(path, filename, strlen(filename));
+    path = strcat(path, "/");
+    if(head.typeflag == '5' && (strcmp(name, ".") || strcmp(name, ".."))){
+        traverse_dir(name, path, fd, begin_dir);
+    }
+
+}
+
 int main(int argc, char *argv[]){
     char *path =NULL;
     char *cd = NULL;
-    int fd, begin_dir;
+    int i,fd, begin_dir;
 
-    begin_dir = open(".", O_RDONLY);
-    fd = open("test.tar", O_WRONLY | O_CREAT | O_TRUNC, 0644);
     path = calloc(256, 1);
-
-    traverse_dir(cd, path, fd, begin_dir);
-    end_padding(fd);
+    if(argc < 3){
+        printf("Usage: mytar [ctvS]f tarfile [ path [ ... ]  ]\n");
+        exit(1);
+    }
+    else{
+        begin_dir = open(".", O_RDONLY);
+        fd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
+        for(i = 3; i < argc; i++){
+            read_file(argv[i], fd, begin_dir);
+            fchdir(begin_dir);
+        }
+        /*
+        traverse_dir(cd, path, fd, begin_dir);
+        */
+        end_padding(fd);
+    }
     return 0;
 }
