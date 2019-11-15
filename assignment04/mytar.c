@@ -12,6 +12,7 @@
 #include<string.h>
 #include<dirent.h>
 #include<grp.h>
+#include<errno.h>
 #include "header.h"
 #include "ustarformat.c"
 
@@ -28,7 +29,7 @@ char *octal_2str(int octal, int length){
 
     str = calloc(length, 1);
     sprintf(str, "%o", octal);
-    if(!str[8] && !str[7]){
+    if(!str[length-1]){
         padded = calloc(length,1);
         zero = length - strlen(str) - 1;
         memset(padded, 48, zero);
@@ -37,7 +38,7 @@ char *octal_2str(int octal, int length){
     }
     return str;
 }
-char *get_name(char *name, char *prefix, struct stat file){
+char *get_name(const char *name, const char *prefix, struct stat file){
     /*will redo this one later*/
     char *path;
     int len;
@@ -45,9 +46,16 @@ char *get_name(char *name, char *prefix, struct stat file){
     memset(path, 0, 100);
     /*increase head of path by 155 chars, if get_prefix func was used*/
     if(P_FLG){
+        if(strlen(prefix) < 155){
+            
+
+
+
+        }
         prefix += 155;
         P_FLG = 0;
     }
+    /*fix the len thing*/
     if((len = strlen(prefix))){
         memcpy(path, prefix,len);
         len += strlen(name);
@@ -244,16 +252,82 @@ char *get_devminor(struct stat file){
     return octal;
 }
 
-char *get_prefix(char *path){
+char *get_prefix(const char *path){
     char *prefix;
     int len;
     prefix = calloc(155, 1);
     len = strlen(path);
     memcpy(prefix, path, len);
+    if(prefix[len-1] == '/'){
+        prefix[len-1] = '\0';
+    }
     P_FLG = 1;
     return prefix;
 }
 
+void get_name_pre(struct stat file, struct header *head,
+                const char *path, const char *name){
+
+    int i,pref=0, count=0, len = strlen(path) + strlen(name);
+    char *full, *tmp;
+
+    if(len > 256){
+        val_head = false;
+        return;
+    }else{
+        full = calloc(256, 1);
+        full = strcpy(full, path);
+        full = strcat(full, name);
+        tmp = calloc(len, 1);
+        for(i=0; i < len; i++){
+            if(full[i] != '/'){
+                tmp[count++] = full[i];
+            }
+            /*partitiion time*/
+            else{
+                if(count < 100)
+                    tmp[count++] = '/';/*keep adding to name*/
+                else if(count < 155){
+                    if(count + pref > 155){
+                        val_head = false;
+                        return;
+                    }
+                    strncat(head->prefix, tmp,count);
+                    pref = count;
+                    count = 0;
+                    memset(tmp,0,len);
+                }
+                else{
+                    val_head = false;
+                    return;
+                }
+            }
+        }
+        if(S_ISDIR(file.st_mode) && val_head){
+            strcat(tmp, "/");
+            count++;
+            if(count < 100){
+                strncpy(head->name, tmp,count);
+            }
+            else if(count + pref < 155){
+                strncat(head->prefix, tmp, count-1);
+            }
+            else{
+                val_head = false;
+            }
+        }
+        else if(count<100){
+            strncpy(head->name, tmp,count);
+        }
+        else if((pref+count)<155 && S_ISDIR(file.st_mode)){
+            strncpy(head->prefix, tmp,count);
+        }
+        else{
+            val_head = false;
+        }
+        free(full);
+    }
+}
 struct header create_header(struct stat file, char *name, char *path){
     struct header head;
     char *tmp;
@@ -263,7 +337,17 @@ struct header create_header(struct stat file, char *name, char *path){
     /*initialize that file may be used for valid header*/
     val_head = true;
     for(;i<1;i++){
-        if(!path || strlen(path) <= 100){
+        /*
+        if(strlen(name) > 100 && !S_ISDIR(file.st_mode)){
+            printf("%s: unable to construct header. (Name too long?)", name);
+            printf(" Skipping.\n");
+            fflush(stdout);
+            val_head =false;
+        }
+        else if(strlen(name) > 100 && strlen(name) < 155){
+            strcpy(head.prefix, get_prefix(name));
+        }
+        else if(strlen(path) <= 100){
             strcpy(head.name, get_name(name, path, file));
         }
         else{
@@ -276,20 +360,39 @@ struct header create_header(struct stat file, char *name, char *path){
                 strcpy(head.name, tmp);
             }
         }
-        strcpy(head.mode, get_mode(file));
+        */
+        get_name_pre(file, &head, path, name);
+        if(val_head == false){
+            printf("%s%s: unable to construct header.",path,name);
+            printf(" (Name too long?)");
+            printf(" Skipping.\n");
+            fflush(stdout);
+            return head;
+        }
+        strncpy(head.mode, get_mode(file),8);
 
         tmp = get_uid(file);
         if(val_head){
             memcpy(head.uid, tmp, 8);
-        }else{break;}
+        } else{
+            printf("%s%s: Unable to create ",path, name);
+            printf("conforming header.  Skipping.\n");
+            fflush(stdout);
+            return head;
+        }
 
         tmp = get_gid(file);
         if(val_head){
             memcpy(head.gid, tmp, 8);
-        }else{break;}
+        }else{
+            printf("%s%s: Unable to create ",path, name);
+            printf("conforming header.  Skipping.\n");
+            fflush(stdout);
+            return head;
+        }
 
         if(S_ISREG(file.st_mode)){
-            strcpy(head.size, get_size(file));
+            strncpy(head.size, get_size(file),12);
         }else{
             strcpy(head.size, "00000000000");
         }
@@ -297,14 +400,14 @@ struct header create_header(struct stat file, char *name, char *path){
         if(S_ISLNK(file.st_mode)){
             strcpy(head.linkname, get_linkname(name));
         }
-        strcpy(head.magic, get_magic());
-        strcpy(head.version, get_version());
-        strcpy(head.uname, get_uname(file));
-        strcpy(head.gname, get_gname(file));
+        strncpy(head.magic, get_magic(), 6);
+        strncpy(head.version, get_version(),2);
+        strncpy(head.uname, get_uname(file),32);
+        strncpy(head.gname, get_gname(file),32);
         head.typeflag = get_typeflag(file);
-        strcpy(head.devmajor, get_devmajor(file));
-        strcpy(head.devminor, get_devminor(file));
-        strcpy(head.chksum, get_chksum(head));
+        strncpy(head.devmajor, get_devmajor(file),8);
+        strncpy(head.devminor, get_devminor(file),8);
+        strncpy(head.chksum, get_chksum(head),8);
     }
     if(DEBUG){
         printf("path/name: %s\n", head.name);
@@ -336,7 +439,7 @@ void write_to_file(struct header head, struct stat file,
     int od, leftover;
     if(V_FLG){
         printf("%s%s\n", head.prefix, head.name);
-
+        fflush(stdout);
     }
     write(fd, &head, sizeof(head));
     lseek(fd, 12, SEEK_CUR);
@@ -352,7 +455,9 @@ void write_to_file(struct header head, struct stat file,
         write(fd, cont, size);
 
         leftover = size % 512;
-        leftover = 512 - leftover;
+        if(leftover != 0){
+            leftover = 512 - leftover;
+        }
         lseek(fd, leftover, SEEK_CUR);
         free(cont);
     }
@@ -364,6 +469,7 @@ void end_padding(int fd){
     zero = calloc(1024, 1);
 
     write(fd, zero, 1024);
+    free(zero);
 }
 char *find_name(char *filename){
     int i, len = strlen(filename);
@@ -377,6 +483,9 @@ char *find_name(char *filename){
         else{
             break;
         }
+    }
+    if(i!=-1){
+        name += ++i;
     }
     return name;
 }
@@ -393,7 +502,7 @@ char *find_path(char *filename){
 
     }
     if(i != -1){
-        memcpy(path, filename, i);
+        memcpy(path, filename, ++i);
     }
     return path;
 }
@@ -404,9 +513,14 @@ void traverse_dir(char *dir_name, char *path, int fd, int begin_dir){
     struct stat curr;
     struct header head;
     DIR *dir;
-    char *name, *new_path;
+    char *name, *new_path, *cwd;
     int valid;
 
+    if(DEBUG){
+        cwd = calloc(356, 1);
+        getcwd(cwd, 356);
+        printf("cwd: %s\n", cwd);
+    }
     de = malloc(sizeof(struct dirent));
     if(strlen(path)){
         valid = chdir(dir_name);
@@ -416,6 +530,10 @@ void traverse_dir(char *dir_name, char *path, int fd, int begin_dir){
         }
     }
     dir = opendir(".");
+    if(errno){
+        perror(dir_name);
+        exit(1);
+    }
     while((de = readdir(dir)) != NULL){
         name = de->d_name;
         if(strcmp(name, ".") && strcmp(name, "..")){
@@ -433,26 +551,22 @@ void traverse_dir(char *dir_name, char *path, int fd, int begin_dir){
                 fchdir(cur_dir);
                 close(cur_dir);
             }
-            else{
-                printf("%s: Unable to create ", head.name);
-                printf("conforming header.  Skipping.\n");
-                fflush(stdout);
-
-            }
             val_head = true;
             /*dont recurse if "." or ".."*/
             if((S_ISDIR(curr.st_mode))){
                 dir_name = name;
-                new_path = strdup(path);
+                new_path = calloc(256, 1);
+                new_path = strcpy(new_path, path);
                 new_path = strcat(new_path, name);
                 new_path = strcat(new_path,"/");
                 traverse_dir(dir_name, new_path, fd, begin_dir);
-
+                free(new_path);
                 /*go back to where u came from*/
                 chdir("..");
             }
         }
     }
+    rewinddir(dir);
     closedir(dir);
 }
 
@@ -470,8 +584,9 @@ void read_file(char *filename, int fd, int begin_dir){
         perror(filename);
         exit(1);
     }
+    name = find_name(filename);
     path = find_path(filename);
-    head = create_header(curr, filename, path);
+    head = create_header(curr, name, path);
     if(val_head){
         cur_dir = open(".", O_RDONLY);
         write_to_file(head, curr, filename, fd, begin_dir);
@@ -483,14 +598,12 @@ void read_file(char *filename, int fd, int begin_dir){
         fflush(stdout);
     }
     val_head =true;
-    name = find_name(filename);
     memcpy(path, filename, strlen(filename));
     if(S_ISDIR(curr.st_mode) && (strcmp(name, ".") || strcmp(name, ".."))){
         path = strcat(path, "/");
-        traverse_dir(name, path, fd, begin_dir);
+        traverse_dir(filename, path, fd, begin_dir);
     }
     free(path);
-    free(name);
 }
 
 int main(int argc, char *argv[]){
@@ -515,9 +628,6 @@ int main(int argc, char *argv[]){
             read_file(argv[i], fd, begin_dir);
             fchdir(begin_dir);
         }
-        /*
-        traverse_dir(cd, path, fd, begin_dir);
-        */
         end_padding(fd);
     }
     return 0;
