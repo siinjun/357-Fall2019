@@ -278,7 +278,7 @@ void get_name_pre(struct stat file, struct header *head,
         full = calloc(256, 1);
         full = strcpy(full, path);
         full = strcat(full, name);
-        tmp = calloc(len, 1);
+        tmp = calloc(256, 1);
         for(i=0; i < len; i++){
             if(full[i] != '/'){
                 tmp[count++] = full[i];
@@ -290,6 +290,8 @@ void get_name_pre(struct stat file, struct header *head,
                 else if(count < 155){
                     if(count + pref > 155){
                         val_head = false;
+                        free(full);
+                        free(tmp);
                         return;
                     }
                     strncat(head->prefix, tmp,count);
@@ -299,6 +301,8 @@ void get_name_pre(struct stat file, struct header *head,
                 }
                 else{
                     val_head = false;
+                    free(full);
+                    free(tmp);
                     return;
                 }
             }
@@ -326,6 +330,7 @@ void get_name_pre(struct stat file, struct header *head,
             val_head = false;
         }
         free(full);
+        free(tmp);
     }
 }
 struct header create_header(struct stat file, char *name, char *path){
@@ -438,7 +443,7 @@ void write_to_file(struct header head, struct stat file,
     size_t size = file.st_size;
     int od, leftover;
     if(V_FLG){
-        printf("%s%s\n", head.prefix, head.name);
+        printf("%s%c%s\n", head.prefix,(head.prefix[0])?'/':'\0', head.name);
         fflush(stdout);
     }
     write(fd, &head, sizeof(head));
@@ -475,7 +480,7 @@ char *find_name(char *filename){
     int i, len = strlen(filename);
     char *name;
 
-    name = calloc(1, len);
+    name = calloc(1, len+1);
     for(i = len-1; i >= 0; i--){
         if(filename[i] != '/'){
             name[i] = filename[i];
@@ -484,6 +489,7 @@ char *find_name(char *filename){
             break;
         }
     }
+    name[len] = '\0';
     if(i!=-1){
         name += ++i;
     }
@@ -551,7 +557,6 @@ void traverse_dir(char *dir_name, char *path, int fd, int begin_dir){
                 fchdir(cur_dir);
                 close(cur_dir);
             }
-            val_head = true;
             /*dont recurse if "." or ".."*/
             if((S_ISDIR(curr.st_mode))){
                 dir_name = name;
@@ -566,6 +571,7 @@ void traverse_dir(char *dir_name, char *path, int fd, int begin_dir){
             }
         }
     }
+    free(de);
     rewinddir(dir);
     closedir(dir);
 }
@@ -593,13 +599,10 @@ void read_file(char *filename, int fd, int begin_dir){
         fchdir(cur_dir);
         close(cur_dir);
     }
-    else{
-        printf("%s: Unable to create conforming header.  Skipping.\n",filename);
-        fflush(stdout);
-    }
-    val_head =true;
-    memcpy(path, filename, strlen(filename));
+
+
     if(S_ISDIR(curr.st_mode) && (strcmp(name, ".") || strcmp(name, ".."))){
+        memcpy(path, filename, strlen(filename));
         path = strcat(path, "/");
         traverse_dir(filename, path, fd, begin_dir);
     }
