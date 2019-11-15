@@ -1,10 +1,11 @@
-#include "mytar.h"
+#include "header.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/stat.h> 
+#include <sys/stat.h>
+#include <fcntl.h>
 
 void extract(int readfile, char *name){
 	char buff[512];
@@ -95,7 +96,7 @@ void extract(int readfile, char *name){
 			size[i] = buff[j];
 		}
 		amount = octtodec(atoi(size));
-		if(namebuff[0]!= 0){
+		if(namebuf[0]!= 0){
 			createnewfile(buff, namebuf, readfile, amount);
 		}
 		 numblocks = amount / 512;
@@ -112,7 +113,8 @@ void extract(int readfile, char *name){
 }
 
 /*makes new thing to write to*/
-void createnewfile(char buff[512], char namebuf[256], int readfile, int amount){
+void createnewfile(char buff[512], char namebuf[256],
+                    int readfile, int amount){
 	int i, j;
 	int newfile;
 	char ch;
@@ -131,8 +133,8 @@ void createnewfile(char buff[512], char namebuf[256], int readfile, int amount){
 	mode = (mode_t)strtol(mod, &ptr, 8);
 	newfile = creat(namebuf, mode);
 	while(curr < amount){
-		read(readfile, ch, 1);
-		write(newfile, ch, 1);
+		read(readfile, &ch, 1);
+		write(newfile, &ch, 1);
 		curr++;
 	}
 }

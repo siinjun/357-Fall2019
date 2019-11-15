@@ -6,5 +6,6 @@
 #include <sys/stat.h>
 
 void extract(int readfile, char *name);
-void createnewfile(char buff[512], char namebuf[256], int readfile, int amount);
+void createnewfile(char buff[512], char namebuf[256],
+                    int readfile, int amount);
 int octtodec(int n);

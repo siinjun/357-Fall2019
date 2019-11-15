@@ -13,7 +13,6 @@
 #include<dirent.h>
 #include<grp.h>
 #include "header.h"
-#include "ustarformat.c"
 #define BLOCK 512
 
 int str_2oct(char *octal){
@@ -87,7 +86,7 @@ char *get_perms(struct header head){
     return perms;
 }
 
-int get_size(struct header head){
+int get_size_of_file(struct header head){
     int size;
 
     size= str_2oct(head.size);
@@ -186,7 +185,7 @@ void read_v_headers(int fd, int v_flg){
         if(hd.name[0]){
             empty = 0;
             perms = get_perms(hd);
-            size = get_size(hd);
+            size = get_size_of_file(hd);
             filename = get_name(hd);
             if(v_flg){
                 verbose = create_verbose(perms,filename,size,hd);
@@ -209,7 +208,7 @@ void read_v_headers(int fd, int v_flg){
     }
 }
 
-int table(int v_flg, char *argv[]){
+void table(int v_flg, char *argv[]){
     int fd;
 
     fd = open(argv[2], O_RDONLY, 0644);
@@ -219,16 +218,4 @@ int table(int v_flg, char *argv[]){
     } else{
         read_v_headers(fd,v_flg);
     }
-    return 0;
-}
-int main(int argc, char *argv[]){
-
-    int fd, v_flg=1;
-
-    
-    /*FIXME*/
-    fd = open(argv[1], O_RDONLY, 0644);
-    read_v_headers(fd,v_flg);
-    return 0;
-
 }

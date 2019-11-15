@@ -16,6 +16,7 @@
 #include "header.h"
 #include "ustarformat.c"
 
+#define SE stderr
 #define DEBUG false
 #define OCTAL_LIMIT 2097151
 
@@ -37,46 +38,6 @@ char *octal_2str(int octal, int length){
         return padded;
     }
     return str;
-}
-char *get_name(const char *name, const char *prefix, struct stat file){
-    /*will redo this one later*/
-    char *path;
-    int len;
-    path = calloc(100, 1);
-    memset(path, 0, 100);
-    /*increase head of path by 155 chars, if get_prefix func was used*/
-    if(P_FLG){
-        if(strlen(prefix) < 155){
-            
-
-
-
-        }
-        prefix += 155;
-        P_FLG = 0;
-    }
-    /*fix the len thing*/
-    if((len = strlen(prefix))){
-        memcpy(path, prefix,len);
-        len += strlen(name);
-        /*if invalid*/
-        if(len > 100){
-            val_head = false;
-            free(path);
-            return NULL;
-        }
-        strcat(path, name);
-    }
-    else{
-        len = strlen(prefix);
-        memcpy(path, prefix, len);
-
-        strcat(path, name);
-    }
-    if(S_ISDIR(file.st_mode)){
-        path = strcat(path, "/");
-    }
-    return path;
 }
 
 char *get_mode(struct stat file){
@@ -100,7 +61,7 @@ char *get_uid(struct stat file){
             perror("Bad uid");
         }
     }else{
-        printf("octal value too long. (%o)\n", uid);
+        fprintf(SE, "octal value too long. (%o)\n", uid);
         val_head = false;
     }
     return octal;
@@ -252,19 +213,6 @@ char *get_devminor(struct stat file){
     return octal;
 }
 
-char *get_prefix(const char *path){
-    char *prefix;
-    int len;
-    prefix = calloc(155, 1);
-    len = strlen(path);
-    memcpy(prefix, path, len);
-    if(prefix[len-1] == '/'){
-        prefix[len-1] = '\0';
-    }
-    P_FLG = 1;
-    return prefix;
-}
-
 void get_name_pre(struct stat file, struct header *head,
                 const char *path, const char *name){
 
@@ -285,9 +233,9 @@ void get_name_pre(struct stat file, struct header *head,
             }
             /*partitiion time*/
             else{
-                if(count < 100)
+                if(count <= 100)
                     tmp[count++] = '/';/*keep adding to name*/
-                else if(count < 155){
+                else if(count <= 155){
                     if(count + pref > 155){
                         val_head = false;
                         free(full);
@@ -311,10 +259,10 @@ void get_name_pre(struct stat file, struct header *head,
             strcat(tmp, "/");
             count++;
         }
-        if(count<100){
+        if(count<=100){
             strncpy(head->name, tmp,count);
         }
-        else if((pref+count)<155 && S_ISDIR(file.st_mode)){
+        else if((pref+count)<=155 && S_ISDIR(file.st_mode)){
             strncpy(head->prefix, tmp,count);
         }
         else{
@@ -333,36 +281,12 @@ struct header create_header(struct stat file, char *name, char *path){
     /*initialize that file may be used for valid header*/
     val_head = true;
     for(;i<1;i++){
-        /*
-        if(strlen(name) > 100 && !S_ISDIR(file.st_mode)){
-            printf("%s: unable to construct header. (Name too long?)", name);
-            printf(" Skipping.\n");
-            fflush(stdout);
-            val_head =false;
-        }
-        else if(strlen(name) > 100 && strlen(name) < 155){
-            strcpy(head.prefix, get_prefix(name));
-        }
-        else if(strlen(path) <= 100){
-            strcpy(head.name, get_name(name, path, file));
-        }
-        else{
-            strcpy(head.prefix, get_prefix(path));
-            tmp = get_name(path,name,file);
-            if(!tmp){
-                val_head = false;
-                break;
-            }else{
-                strcpy(head.name, tmp);
-            }
-        }
-        */
         get_name_pre(file, &head, path, name);
         if(val_head == false){
-            printf("%s%s: unable to construct header.",path,name);
-            printf(" (Name too long?)");
-            printf(" Skipping.\n");
-            fflush(stdout);
+            fprintf(SE, "%s%s: unable to construct header.",path,name);
+            fprintf(SE, " (Name too long?)");
+            fprintf(SE," Skipping.\n");
+            fflush(stderr);
             return head;
         }
         strncpy(head.mode, get_mode(file),8);
@@ -371,9 +295,9 @@ struct header create_header(struct stat file, char *name, char *path){
         if(val_head){
             memcpy(head.uid, tmp, 8);
         } else{
-            printf("%s%s: Unable to create ",path, name);
-            printf("conforming header.  Skipping.\n");
-            fflush(stdout);
+            fprintf(SE,"%s%s: Unable to create ",path, name);
+            fprintf(SE,"conforming header.  Skipping.\n");
+            fflush(stderr);
             return head;
         }
 
@@ -381,9 +305,9 @@ struct header create_header(struct stat file, char *name, char *path){
         if(val_head){
             memcpy(head.gid, tmp, 8);
         }else{
-            printf("%s%s: Unable to create ",path, name);
-            printf("conforming header.  Skipping.\n");
-            fflush(stdout);
+            fprintf(SE,"%s%s: Unable to create ",path, name);
+            fprintf(SE,"conforming header.  Skipping.\n");
+            fflush(stderr);
             return head;
         }
 
@@ -590,8 +514,6 @@ void read_file(char *filename, int fd, int begin_dir){
         fchdir(cur_dir);
         close(cur_dir);
     }
-
-
     if(S_ISDIR(curr.st_mode) && (strcmp(name, ".") || strcmp(name, ".."))){
         memcpy(path, filename, strlen(filename));
         path = strcat(path, "/");
@@ -600,7 +522,7 @@ void read_file(char *filename, int fd, int begin_dir){
     free(path);
 }
 
-int creation(int v_flg, int s_flg, int argc, char *argv[]){
+void creation(int v_flg, int s_flg, int argc, char *argv[]){
 
     int begin_dir,i,fd;
 
@@ -613,7 +535,7 @@ int creation(int v_flg, int s_flg, int argc, char *argv[]){
     begin_dir = open(".", O_RDONLY);
     fd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
     if(fd == -1){
-        perror(argv[2]);
+        fprintf(stderr, "%s: Bad file descriptor.\n", argv[2]);
         exit(1);
     }
     for(i = 3; i < argc; i++){
@@ -622,9 +544,8 @@ int creation(int v_flg, int s_flg, int argc, char *argv[]){
     }
     end_padding(fd);
 
-    return 0;
 }
-
+/*
 int main(int argc, char *argv[]){
     int i,fd, begin_dir;
 
@@ -650,4 +571,4 @@ int main(int argc, char *argv[]){
         end_padding(fd);
     }
     return 0;
-}
+}*/
