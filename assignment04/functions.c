@@ -17,7 +17,7 @@ void extract(int readfile, char *name){
 	int j = 0;
 
 	memset(buff, 0 ,512);
-	memset(namebuf, 0 , 256)
+	memset(namebuf, 0 , 256);
 
 	if(name != NULL){
 		while(read(readfile, buff, 512)>0){
