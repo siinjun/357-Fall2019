@@ -191,7 +191,7 @@ void traverse(char *dir_name, int fd, int v_flg){
 
     struct header hd;
     char *perms, *filename, *verbose;
-    bool inside = true, valid = false, good_header = true;
+    bool inside = true, valid = false;
     int n = strlen(dir_name), blocks, size;
     while(inside){
         valid = false;
@@ -234,19 +234,13 @@ void traverse(char *dir_name, int fd, int v_flg){
 void read_all_headers(int fd, int v_flg){
     struct header hd;
     char *perms, *filename, *verbose;
-    bool done = false, good_header = true;
+    bool done = false;
     int blocks, empty=0, size;
 
     while(!done){
         /*get tar header into struct header*/
         read(fd, &hd, sizeof(struct header));
         lseek(fd, 12, SEEK_CUR);
-        good_header = checkheader(hd);
-        /*
-        if(!good_header){
-            fprintf(stderr, "Malformed header. Quiting.");
-            exit(2);
-        }*/
         if(hd.name[0] || hd.prefix[0]){
             empty = 0;
             perms = get_perms(hd);
@@ -276,7 +270,7 @@ void read_all_headers(int fd, int v_flg){
 void read_specific_files(int fd, int v_flg, int argc, char *argv[]){
     struct header hd;
     char *perms, *filename, *verbose;
-    bool done = false, valid = false, subdir = false, good_header = true;
+    bool done = false, valid = false, subdir = false;
     int blocks, empty=0, size, i;
 
     while(!done){

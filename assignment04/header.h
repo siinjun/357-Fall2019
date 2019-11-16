@@ -31,7 +31,5 @@ struct __attribute__ ((__packed__)) header{
 uint32_t extract_special_int(char *where, int len);
 int insert_special_int(char *where, size_t size, int32_t val);
 void extract(int readfile, char *name);
-void createnewfile(char buff[512], char namebuf[256],
-                    int readfile, int amount);
 int octtodec(int n);
 #endif
