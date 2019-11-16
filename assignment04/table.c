@@ -173,13 +173,51 @@ char *create_verbose(char *perms,char *filename,int size,struct header head){
 
     return verbose;
 }
-void traverse(char *filename, int fd, int v_flg){
+void traverse(char *dir_name, int fd, int v_flg){
 
-    struct dirent de;
-    struct stat curr;
-    int val;
+    struct header hd;
+    char *perms, *filename, *verbose;
+    bool inside = true, valid = false;
+    int n = strlen(dir_name), blocks, size;
+    while(inside){
+        valid = false;
+        read(fd, &hd, sizeof(struct header));
+        lseek(fd, 12, SEEK_CUR);
+        if(hd.name[0] || hd.prefix[0]){
+            filename = get_name(hd);
+            if(strncmp(dir_name, filename,n)==0){
+                valid = true;
+            }
+            if(valid){
+                perms = get_perms(hd);
+                size = get_size_of_file(hd);
+                filename = get_name(hd);
+                if(v_flg){
+                    verbose = create_verbose(perms,filename,size,hd);
+                    printf("%s\n", verbose);
+                    fflush(stdout);
+                }
+                if(!v_flg){
+                    printf("%s\n", filename);
+                }
+                if(perms[0] != 'd' && perms[0] != 'l'){
+                    blocks = size / BLOCK;
+                    lseek(fd, (blocks+1)*BLOCK, SEEK_CUR);
+                }
+                if(hd.typeflag == '5'){
+                    /*traverse all files in dir*/
+                    traverse(filename, fd, v_flg);
+                }
+            }
+            else{
+                inside = false;
+            }
 
-    val = lstat(filename, &curr);
+        }
+        else{
+            inside = false;
+        }
+    }
 
 }
 void read_all_headers(int fd, int v_flg){
@@ -219,16 +257,20 @@ void read_all_headers(int fd, int v_flg){
 
 void read_specific_files(int fd, int v_flg, int argc, char *argv[]){
     struct header hd;
-    char *perms, *filename, *verbose, *dir_name;
-    bool done = false, valid = false;
+    char *perms, *filename, *verbose;
+    bool done = false, valid = false, subdir = false;
     int blocks, empty=0, size, i;
 
     while(!done){
         valid =false;
+        if(subdir){
+            subdir = false;
+            lseek(fd, 512, SEEK_CUR);
+        }
         /*get tar header into struct header*/
         read(fd, &hd, sizeof(struct header));
         lseek(fd, 12, SEEK_CUR);
-        if(hd.name[0]){
+        if(hd.name[0] || hd.prefix[0]){
             filename = get_name(hd);
             for(i=3; i < argc; i++){
                 if(strcmp(argv[i], filename)==0){
@@ -256,6 +298,7 @@ void read_specific_files(int fd, int v_flg, int argc, char *argv[]){
                 if(hd.typeflag == '5'){
                     /*traverse all files in dir*/
                     traverse(filename, fd, v_flg);
+                    subdir = true;
                 }
                 free(perms);
             }
