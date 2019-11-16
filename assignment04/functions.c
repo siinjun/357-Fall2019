@@ -8,10 +8,11 @@ void extract(int readfile, char *name){
 	int amount = 0;
 	int numblocks = 0;
 	int i, j;
+    struct header head;
 
 	memset(buff, 0 ,512);
 	memset(namebuf, 0 , 256);
-
+    read(readfile, &head, sizeof(struct header));
 	if(name != NULL){
 		/*read header first*/
 		while(read(readfile, buff, 512)>0){
@@ -47,13 +48,13 @@ void extract(int readfile, char *name){
 			/*find out how much need to write*/
 			amount = octtodec(atoi(size));
 
-			if(namebuf[0]!= 0 && strcmp(name,namebuf)== 0){
+			if(namebuf[0]!= 0)/*&& strcmp(name,namebuf)== 0)*/{
 				/*printf("%s\n",namebuff);*/
 				createnewfile(buff, namebuf, readfile, amount);
-			}
+			}/*
 			else{
 				lseek(readfile, amount, SEEK_CUR);
-			}
+			}*/
 
 			 numblocks = amount / 512;
 			 remainder = amount % 512;

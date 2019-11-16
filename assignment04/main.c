@@ -69,7 +69,7 @@ int main(int argc, char *argv[]){
                     creation(v_flg, s_flg, argc, argv);
                 }
                 else if(tbl){
-                    table(v_flg, argv);
+                    table(v_flg, argc, argv);
                 }
                 else if(xtrct){
                     fd = open(argv[2], O_RDONLY);

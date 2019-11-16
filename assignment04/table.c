@@ -101,6 +101,7 @@ char *get_name(struct header hd){
 
     if(hd.prefix[0]){
         name = strncpy(name, hd.prefix, 155);
+        name = strncat(name, "/", 1);
         name = strncat(name, hd.name,100);
     }
     else{
@@ -172,8 +173,16 @@ char *create_verbose(char *perms,char *filename,int size,struct header head){
 
     return verbose;
 }
+void traverse(char *filename, int fd, int v_flg){
 
-void read_v_headers(int fd, int v_flg){
+    struct dirent de;
+    struct stat curr;
+    int val;
+
+    val = lstat(filename, &curr);
+
+}
+void read_all_headers(int fd, int v_flg){
     struct header hd;
     char *perms, *filename, *verbose;
     bool done = false;
@@ -182,7 +191,7 @@ void read_v_headers(int fd, int v_flg){
         /*get tar header into struct header*/
         read(fd, &hd, sizeof(struct header));
         lseek(fd, 12, SEEK_CUR);
-        if(hd.name[0]){
+        if(hd.name[0] || hd.prefix[0]){
             empty = 0;
             perms = get_perms(hd);
             size = get_size_of_file(hd);
@@ -208,14 +217,68 @@ void read_v_headers(int fd, int v_flg){
     }
 }
 
-void table(int v_flg, char *argv[]){
+void read_specific_files(int fd, int v_flg, int argc, char *argv[]){
+    struct header hd;
+    char *perms, *filename, *verbose, *dir_name;
+    bool done = false, valid = false;
+    int blocks, empty=0, size, i;
+
+    while(!done){
+        valid =false;
+        /*get tar header into struct header*/
+        read(fd, &hd, sizeof(struct header));
+        lseek(fd, 12, SEEK_CUR);
+        if(hd.name[0]){
+            filename = get_name(hd);
+            for(i=3; i < argc; i++){
+                if(strcmp(argv[i], filename)==0){
+                    valid = true;
+                    break;
+                }
+            }
+            if(valid){
+                empty = 0;
+                perms = get_perms(hd);
+                size = get_size_of_file(hd);
+                filename = get_name(hd);
+                if(v_flg){
+                    verbose = create_verbose(perms,filename,size,hd);
+                    printf("%s\n", verbose);
+                    fflush(stdout);
+                }
+                if(!v_flg){
+                    printf("%s\n", filename);
+                }
+                if(perms[0] != 'd' && perms[0] != 'l'){
+                    blocks = size / BLOCK;
+                    lseek(fd, (blocks+1)*BLOCK, SEEK_CUR);
+                }
+                if(hd.typeflag == '5'){
+                    /*traverse all files in dir*/
+                    traverse(filename, fd, v_flg);
+                }
+                free(perms);
+            }
+        }
+        else{
+            if(++empty == 2)
+                done = true;
+        }
+    }
+}
+
+void table(int v_flg, int argc, char *argv[]){
     int fd;
 
     fd = open(argv[2], O_RDONLY, 0644);
     if(fd==-1){
         perror(argv[2]);
         exit(2);
-    } else{
-        read_v_headers(fd,v_flg);
+    }
+    else if(argc > 3){
+        read_specific_files(fd, v_flg, argc, argv);
+    } 
+    else{
+        read_all_headers(fd,v_flg);
     }
 }
