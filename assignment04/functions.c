@@ -2,14 +2,11 @@
 #include "header.h"
 
 void extract(int readfile, char *name){
-	char buff[512];
-	char namebuf[256];
-	char size[12];
+	char *namebuf;
+	char *size;
 	int amount = 0;
 	int i, j;
 	struct header head;
-
-	memset(buff, 0 ,512);
 
 	/*read header first*/
 	read(readfile, &head, sizeof(struct header));
@@ -137,11 +134,11 @@ void extract(int readfile, char *name){
 }
 
 /*makes new thing to write to*/
-void createnewfile(char namebuf[256], int readfile, int amount){
+void createnewfile(char *namebuf, int readfile, int amount){
 	int newfile, count;
 	char ch;
 
-	newfile = open(namebuf, O_WRONLY | O_CREAT | O_TRUNC, mode);
+	newfile = open(namebuf, O_WRONLY | O_CREAT | O_TRUNC);
 	while(count < amount){
 		read(readfile, ch, 1);
 		write(newfile, ch, 1);
