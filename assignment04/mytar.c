@@ -545,30 +545,3 @@ void creation(int v_flg, int s_flg, int argc, char *argv[]){
     end_padding(fd);
 
 }
-/*
-int main(int argc, char *argv[]){
-    int i,fd, begin_dir;
-
-    if(argc < 3){
-        printf("Usage: mytar [ctvS]f tarfile [ path [ ... ]  ]\n");
-        exit(1);
-    }
-    else{
-        begin_dir = open(".", O_RDONLY);
-        fd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, 0644);
-        for(i =0; i<strlen(argv[1]); i++){
-            if(argv[1][i] == 'S'){
-                S_FLG = 1;
-            }
-            if(argv[1][i] == 'v'){
-                V_FLG = 1;
-            }
-        }
-        for(i = 3; i < argc; i++){
-            read_file(argv[i], fd, begin_dir);
-            fchdir(begin_dir);
-        }
-        end_padding(fd);
-    }
-    return 0;
-}*/
