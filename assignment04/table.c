@@ -204,10 +204,6 @@ void traverse(char *dir_name, int fd, int v_flg){
                     blocks = size / BLOCK;
                     lseek(fd, (blocks+1)*BLOCK, SEEK_CUR);
                 }
-                if(hd.typeflag == '5'){
-                    /*traverse all files in dir*/
-                    traverse(filename, fd, v_flg);
-                }
             }
             else{
                 inside = false;
@@ -263,9 +259,10 @@ void read_specific_files(int fd, int v_flg, int argc, char *argv[]){
 
     while(!done){
         valid =false;
+        /*if traversed a subdir then go back one header block*/
         if(subdir){
             subdir = false;
-            lseek(fd, 512, SEEK_CUR);
+            lseek(fd, -512, SEEK_CUR);
         }
         /*get tar header into struct header*/
         read(fd, &hd, sizeof(struct header));
