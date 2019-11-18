@@ -1,24 +1,10 @@
-#include<stdio.h>
-#include<stdbool.h>
-#include<stdlib.h>
-#include<stdint.h>
-#include<fcntl.h>
-#include<sys/stat.h>
-#include<sys/types.h>
-#include<sys/sysmacros.h>
-#include<unistd.h>
-#include<time.h>
-#include<pwd.h>
-#include<string.h>
-#include<dirent.h>
-#include<grp.h>
-#include<errno.h>
-#include "functions.c"
 #include "table.c"
 #include "create.c"
+#include "extraction.c"
 #define SE stderr
 
 int main(int argc, char *argv[]){
+
     int i,v_flg=0,s_flg=0, command=0, fd;
     bool crt=false, tbl = false, xtrct = false, run=false;
 
@@ -73,7 +59,12 @@ int main(int argc, char *argv[]){
                 }
                 else if(xtrct){
                     fd = open(argv[2], O_RDONLY);
-                    extract(fd, argv[2]);
+/*                    extract(fd, argv[2]);*/
+                    if(argc == 3){
+                        myextraction(fd, v_flg);
+                    } else{
+                        myextraction_named(fd, argc, argv, v_flg);
+                    }
                 }
 
             }

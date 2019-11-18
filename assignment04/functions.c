@@ -5,13 +5,12 @@ void extract(int readfile, char *name){
 	char *namebuf;
 	char *size;
 	int amount = 0;
-	int i, j;
 	struct header head;
 
 	/*read header first*/
 	read(readfile, &head, sizeof(struct header));
 	lseek(readfile, 12, SEEK_CUR);
-
+    namebuf = calloc(256, 1);
 	if(head.prefix[0] != 0){
 		namebuf = strncpy(namebuf, head.prefix, 155);
 		strcat(namebuf, "/");
@@ -28,7 +27,7 @@ void extract(int readfile, char *name){
 	amount = octtodec(atoi(size));
 
 	if(name != NULL){
-		/*while loop should check namebuf if it is the correct file or not*/
+        /*while loop should check namebuf if it is the correct file or not*/
 		/*if not correct one, move on to next file*/
 		while(strcmp(name,namebuf) != 0){
 			lseek(readfile, amount, SEEK_CUR);
@@ -39,7 +38,7 @@ void extract(int readfile, char *name){
 			lseek(readfile, 12, SEEK_CUR);
 
 			if(head.prefix[0] != 0){
-					namebuf = strncpy(namebuf, head.prefix, 155);
+                    namebuf = strncpy(namebuf, head.prefix, 155);
 					strcat(namebuf, "/");
 					strcat(namebuf, head.name);
 			}
@@ -49,35 +48,14 @@ void extract(int readfile, char *name){
 			size = strdup(head.size);
 			amount = octtodec(atoi(size));
 
-			/*printf("header: %s\n", buff);*/
-			/*read name first*/
-			/*for(i = 0; i< 100; i++){
-				namebuf[i] = buff[i];
-			}*/
-			/*handle if name longer than 100 char*/
-			/*if(namebuf[99]!= '\0'){
-				j = 100;
-				i = 345;
-				while(buff[i] != '\0' && i< 500){
-					namebuf[j] = buff[i];
-					i++;
-					j++;
-				}
-				namebuf[j] = '\0';
-			}*/
-			/*printf("%s\n",namebuf);*/
-			/*printf("%s\n",name);*/
-			/*for(i = 0, j = 124; i<12; i++, j++){
-				size[i] = buff[j];
-			}*/
 		}
-		createnewfile(readfile, namebuf, amount);
+		createnewfile(namebuf, readfile, amount);
 
 
 	}else{
 		while(namebuf[0] != 0){
 			/*writing contents of new file*/
-			createnewfile(readfile, namebuf, amount);
+			createnewfile(namebuf, readfile, amount);
 			lseek(readfile, 512 - amount % 512, SEEK_CUR);
 
 			/*getting new info*/
@@ -86,7 +64,7 @@ void extract(int readfile, char *name){
 			lseek(readfile, 12, SEEK_CUR);
 
 			if(head.prefix[0] != 0){
-					namebuf = strncpy(namebuf, head.prefix, 155);
+                    namebuf = strncpy(namebuf, head.prefix, 155);
 					strcat(namebuf, "/");
 					strcat(namebuf, head.name);
 			}
@@ -104,7 +82,7 @@ void extract(int readfile, char *name){
 				lseek(readfile, 12, SEEK_CUR);
 
 				if(head.prefix[0] != 0){
-						namebuf = strncpy(namebuf, head.prefix, 155);
+                        namebuf = strncpy(namebuf, head.prefix, 155);
 						strcat(namebuf, "/");
 						strcat(namebuf, head.name);
 				}
@@ -116,19 +94,6 @@ void extract(int readfile, char *name){
 			}
 
 
-			/*if(namebuf[0]!= 0){
-				createnewfile(buff, namebuf, readfile, amount);
-			}
-
-			 numblocks = amount / 512;
-			 remainder = amount % 512;
-
-			if(remainder!=0){
-				numblocks++;
-			}
-
-			memset(buff, 0 ,512);
-			lseek(readfile, numblocks * 512-amount, SEEK_CUR);*/
 		}
 	}
 }
@@ -140,8 +105,8 @@ void createnewfile(char *namebuf, int readfile, int amount){
 
 	newfile = open(namebuf, O_WRONLY | O_CREAT | O_TRUNC);
 	while(count < amount){
-		read(readfile, ch, 1);
-		write(newfile, ch, 1);
+		read(readfile, &ch, 1);
+		write(newfile, &ch, 1);
 		count++;
 	}
 }
