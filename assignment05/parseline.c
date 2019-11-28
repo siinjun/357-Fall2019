@@ -71,7 +71,7 @@ void check_inputs_redirection(char **pipeline){
         inputs = 0;
         outputs = 0;
         len = strlen(pipeline[i]);
-        tmp = calloc(len, 1);
+        tmp = calloc(len + 1, 1);
         tmp = strcpy(tmp, pipeline[i]);
         token = strtok(tmp, delim);
         for(j=0;j<len;j++){
@@ -86,9 +86,9 @@ void check_inputs_redirection(char **pipeline){
                     fprintf(stderr, "%s: ambiguous input\n", token);
                     exit(1);
                 }
-                if(outputs == 1){
-                    ambig_out = true;
-                }
+            }
+            if(outputs == 1){
+                ambig_out = true;
             }
             if(inputs > 1){
                 fprintf(stderr, "%s: bad input redirection\n", token);
@@ -99,6 +99,7 @@ void check_inputs_redirection(char **pipeline){
                 exit(1);
             }
         }
+        free(tmp);
     }
 }
 
@@ -130,6 +131,14 @@ char **parse_commands(char *cmd){
                     exit(1);
                 }
             }
+        }else{
+            if(!strcmp(token, "<")){
+                set_in = true;
+            }
+            else{
+                set_out = true;
+            }
+
         }
         token = strtok(NULL, parse);
     }
@@ -158,9 +167,9 @@ char **get_pipeline(char *cmd){
 
 void format_stdout(char **arguments, char *line, int stage){
     int i = 0;
-    printf("\n-------\nStage %d: \"%s\"\n-------\n", stage,line);
+    printf("\n--------\nStage %d: \"%s\"\n--------\n", stage,line);
     if(!strncmp(input, "pipe from", 9)){
-        printf("%10s: %s%d\n","input", input, stage);
+        printf("%10s: %s%d\n","input", input, stage - 1);
     } else{
         printf("%10s: %s\n","input", input);
     }
@@ -210,6 +219,10 @@ int main(){
         arguments = parse_commands(pipeline[stage]);
         format_stdout(arguments, line, stage++);
         memset(line, 0, CMD_LEN);
+        free(arguments);
     }
+    free(cmd);
+    free(pipeline);
+    free(line);
     return 0;
 }
