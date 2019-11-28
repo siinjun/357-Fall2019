@@ -1,0 +1,223 @@
+#include "mush.h"
+
+#define CMD_LEN     1024
+#define PIPE_MAX    20
+#define MAX_ARGS    20
+
+char *output;
+char *input;
+int argc;
+int num_pipes = -1;
+
+char *strdup(const char *c)
+{
+    char *dup = calloc(strlen(c) + 1, 1);
+
+    if (dup != NULL)
+       strcpy(dup, c);
+
+    return dup;
+}
+
+char *get_commands(){
+    char *command_line;
+    int i;
+
+    command_line = calloc(CMD_LEN, 1);
+    printf("$8-P ");
+    fgets(command_line, CMD_LEN, stdin);
+    i = strlen(command_line) - 1;
+    command_line[i] = '\0';
+    return command_line;
+}
+
+void check_pipes(char *cmd){
+    int i, len = strlen(cmd);
+    char pipe = '\0';
+
+    for(i=0; i < len; i++){
+        if(cmd[i] != ' '){
+            if(cmd[i] == '|' && pipe != '|'){
+                pipe = '|';
+            }
+            else if(cmd[i] == '|' && pipe == '|'){
+                /*pipe line error*/
+                fprintf(stderr, "invalid null command\n");
+                exit(1);
+            }
+            else{
+                pipe = cmd[i];
+            }
+        }
+    }
+}
+
+void check_inputs_redirection(char **pipeline){
+    char *token, *tmp;
+    int i=0, j, inputs, outputs, len;
+    const char *delim = " ";
+    bool ambig_out=false;
+
+    for(;pipeline[i];i++){
+        if(ambig_out){
+            fprintf(stderr, "%s: ambiguous output\n", token);
+            exit(1);
+        }
+        inputs = 0;
+        outputs = 0;
+        len = strlen(pipeline[i]);
+        tmp = calloc(len, 1);
+        tmp = strcpy(tmp, pipeline[i]);
+        token = strtok(tmp, delim);
+        for(j=0;j<len;j++){
+            if(pipeline[i][j] == '<'){
+                inputs++;
+            }
+            if(pipeline[i][j] == '>'){
+                outputs++;
+            }
+            if(i > 0){
+                if(inputs > 0){
+                    fprintf(stderr, "%s: ambiguous input\n", token);
+                    exit(1);
+                }
+                if(outputs == 1){
+                    ambig_out = true;
+                }
+            }
+            if(inputs > 1){
+                fprintf(stderr, "%s: bad input redirection\n", token);
+                exit(1);
+            }
+            if(outputs > 1){
+                fprintf(stderr, "%s: bad output redirection\n", token);
+                exit(1);
+            }
+        }
+    }
+}
+
+char **parse_commands(char *cmd){
+    char **args;
+    const char parse[2] = " ";
+    char *token, *prog;
+    bool set_in = true, set_out = true;
+
+    argc=0;
+    args = calloc(MAX_ARGS, sizeof(char *));
+    token = strtok(cmd, parse);
+    prog = strdup(token);
+
+    while(token != NULL){
+        if(strcmp(token, "<") && strcmp(token, ">")){
+            if(set_in){
+                set_in = false;
+                input = token;
+            }
+            else if(set_out){
+                set_out = false;
+                output = token;
+            }
+            else{
+                args[argc++] = token;
+                if(argc > MAX_ARGS){
+                    fprintf(stderr, "%s: too many args\n", prog);
+                    exit(1);
+                }
+            }
+        }
+        token = strtok(NULL, parse);
+    }
+    free(prog);
+    return args;
+}
+
+char **get_pipeline(char *cmd){
+    char **pipe, *token;
+    const char parse[2] = "|";
+    int i = 0;
+    pipe = calloc(PIPE_MAX, sizeof(char *));
+
+    token = strtok(cmd, parse);
+    while(token != NULL){
+        num_pipes++;
+        pipe[i++] = token;
+        token = strtok(NULL, parse);
+        if(i > PIPE_MAX){
+            fprintf(stderr, "Too many args.\n");
+            exit(1);
+        }
+    }
+    return pipe;
+}
+
+void format_stdout(char **arguments, char *line, int stage){
+    int i = 0;
+    printf("\n-------\nStage %d: \"%s\"\n-------\n", stage,line);
+    if(!strncmp(input, "pipe from", 9)){
+        printf("%10s: %s%d\n","input", input, stage);
+    } else{
+        printf("%10s: %s\n","input", input);
+    }
+    if(!strncmp(output, "pipe to", 7)){
+        printf("%10s: %s%d\n","output",output, stage + 1);
+    } else{
+        printf("%10s: %s\n","output",output);
+    }
+    printf("%10s: %d\n","argc", argc);
+    printf("%10s: ", "argv");
+    while(arguments[i]){
+        if(i != 0){
+            printf(",");
+        }
+        printf("\"%s\"", arguments[i++]);
+    }
+    printf("\n");
+}
+
+int parse(){
+    char *cmd, *line, **pipeline, **arguments;
+    int stage = 0;
+
+    cmd = get_commands();
+    check_pipes(cmd);
+    pipeline = get_pipeline(cmd);
+    check_inputs_redirection(pipeline);
+    line = calloc(CMD_LEN, 1);
+
+    while(pipeline[stage]){
+        if(stage == 0){
+            input = "original stdin";
+            if(num_pipes > 0){
+                output = "pipe to stage ";
+            } else{
+                output = "original stdout";
+            }
+        } else {
+            input = "pipe from stage ";
+            if(stage == num_pipes){
+                output = "original stdout";
+            } else{
+                output = "pipe to stage ";
+            }
+        }
+        line = strcpy(line, pipeline[stage]);
+        arguments = parse_commands(pipeline[stage]);
+        format_stdout(arguments, line, stage++);
+        memset(line, 0, CMD_LEN);
+    }
+    return 0;
+}
+
+char ** pipeline(){
+    char *cmd, *line, **pipeline, **arguments;
+    int stage = 0;
+
+    cmd = get_commands();
+    check_pipes(cmd);
+    pipeline = get_pipeline(cmd);
+    check_inputs_redirection(pipeline);
+    line = calloc(CMD_LEN, 1);
+
+   return pipeline;
+}
