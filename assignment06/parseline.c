@@ -24,7 +24,7 @@ char *get_commands(){
     int i;
 
     command_line = calloc(CMD_LEN, 1);
-    printf("Line: ");
+    printf("$8-P ");
     fgets(command_line, CMD_LEN, stdin);
     i = strlen(command_line) - 1;
     command_line[i] = '\0';
@@ -101,7 +101,7 @@ char **parse_commands(char *cmd){
     char **args;
     const char parse[2] = " ";
     char *token, *prog;
-    bool set_in = false, set_out = false;
+    bool set_in = true, set_out = true;
 
     argc=0;
     args = calloc(MAX_ARGS, sizeof(char *));
@@ -190,14 +190,14 @@ int parse(){
             input = "original stdin";
             if(num_pipes > 0){
                 output = "pipe to stage ";
-            }else{
+            } else{
                 output = "original stdout";
             }
         } else {
             input = "pipe from stage ";
             if(stage == num_pipes){
                 output = "original stdout";
-            }else{
+            } else{
                 output = "pipe to stage ";
             }
         }
@@ -207,4 +207,17 @@ int parse(){
         memset(line, 0, CMD_LEN);
     }
     return 0;
+}
+
+char ** pipeline(){
+    char *cmd, *line, **pipeline, **arguments;
+    int stage = 0;
+
+    cmd = get_commands();
+    check_pipes(cmd);
+    pipeline = get_pipeline(cmd);
+    check_inputs_redirection(pipeline);
+    line = calloc(CMD_LEN, 1);
+
+   return pipeline;
 }
