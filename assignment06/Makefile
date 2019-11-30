@@ -12,4 +12,4 @@ process: process.c
 	gcc process.c -c $(CFLAGS)
 
 clean:
-	rm *.o
+	rm *.o mush

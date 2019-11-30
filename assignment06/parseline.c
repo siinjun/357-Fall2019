@@ -31,6 +31,11 @@ char *get_commands(){
     command_line = calloc(CMD_LEN, 1);
     printf("$8-P ");
     fgets(command_line, CMD_LEN, stdin);
+    if(command_line[0] == '\0'){
+        free(command_line);
+        printf("\n");
+        exit(0);
+    }
     i = strlen(command_line) - 1;
     command_line[i] = '\0';
     return command_line;
@@ -55,6 +60,11 @@ void check_pipes(char *cmd){
             }
         }
     }
+    /*
+    if(cmd[len-1] == '|'){
+        fprintf(stderr, "invalid null command\n");
+    }
+    */
 }
 
 void check_inputs_redirection(char **pipeline){
@@ -99,7 +109,6 @@ void check_inputs_redirection(char **pipeline){
                 exit(1);
             }
         }
-        free(tmp);
     }
 }
 
@@ -165,29 +174,7 @@ char **get_pipeline(char *cmd){
     return pipe;
 }
 
-void format_stdout(char **arguments, char *line, int stage){
-    int i = 0;
-    printf("\n--------\nStage %d: \"%s\"\n--------\n", stage,line);
-    if(!strncmp(input, "pipe from", 9)){
-        printf("%10s: %s%d\n","input", input, stage - 1);
-    } else{
-        printf("%10s: %s\n","input", input);
-    }
-    if(!strncmp(output, "pipe to", 7)){
-        printf("%10s: %s%d\n","output",output, stage + 1);
-    } else{
-        printf("%10s: %s\n","output",output);
-    }
-    printf("%10s: %d\n","argc", argc);
-    printf("%10s: ", "argv");
-    while(arguments[i]){
-        if(i != 0){
-            printf(",");
-        }
-        printf("\"%s\"", arguments[i++]);
-    }
-    printf("\n");
-}
+
 /*
 int other(){
     char *cmd, *line, **pipeline, **arguments;

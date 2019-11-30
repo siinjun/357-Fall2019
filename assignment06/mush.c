@@ -57,19 +57,16 @@ int main(int argc, char *argv[]){
         pipes = pipeline();
         while(pipes[stage]){
             args = parse_commands(pipes[stage++]);
-            val = process(args);
+            if(!strcmp(args[0], "cd")){
+                val = chdir(args[1]);
+            } else {
+              val = process(args);
+            }
             if(val){
                 printf("failure\n");
             } else{
                 printf("success\n");
             }
-            /*
-            while(args[i]){
-                printf("\"%s\"", args[i++]);
-            }
-            printf("\n");
-            i=0;
-            */
         }
         free(args);
         stage = 0;
