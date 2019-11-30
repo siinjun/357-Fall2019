@@ -35,7 +35,7 @@ char *get_commands(){
         free(command_line);
         printf("\n");
         exit(0);
-    }
+    }    
     i = strlen(command_line) - 1;
     command_line[i] = '\0';
     return command_line;
