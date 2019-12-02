@@ -1,18 +1,46 @@
 #include "mush.h"
 #include "parseline.c"
+#define SIZE 1024
 /*#include "process.c"*/
+int DEBUG = false;
 
-int process(char *argv[]){
-    pid_t child, pid;
+void close_fd(int fd[], int stage){
+    int i;
+    for(i = 0; i < stage; i++){
+        close(fd[2*i]);
+        close(fd[2*i+1]);
+    }
+}
+
+void process(int fd){
+    int num;
+    char buf[SIZE];
+
+    memset(buf, 0, SIZE);
+    while((num=read(fd,buf,SIZE)) > 0){
+        if(write(STDOUT_FILENO, buf, num) < 0){
+            perror("write");
+            exit(1);
+        }
+    }
+    if(num < 0){
+        perror("read");
+        exit(1);
+    }
+}
+int execute(char *argv[], int fd[], int stage){
+    pid_t child;
     int status;
-    struct stat curr;
+
     if((child = fork())){
         /*parent*/
-        pid = getpid();
         if(-1 == wait(&status)){
             perror("wait");
             exit(1);
         }
+        /*
+        process(fd[2*stage]);
+        */
         if((WIFEXITED(status) && WEXITSTATUS(status)) || WIFSIGNALED(status)){
             return 1;
         } else{
@@ -20,16 +48,22 @@ int process(char *argv[]){
         }
     }
     /*child*/
-    pid = getpid();
-    /*
-    status = lstat(argv[0], &curr);
-    if(status == -1){
-        perror(argv[1]);
+    if(dup2(fd[stage*2 + 1], STDOUT_FILENO) < 0){
+        perror("dup2");
+        exit(1);
     }
-    */
+    if(stage > 0){
+        /*if in middle of pipeline, stdin is the read end of the previous pipe*/
+        if(dup2(fd[stage*1], STDIN_FILENO) < 0 ){
+            perror("dup2");
+            exit(1);
+        }
+    }
     status = execvp(argv[0], argv);
 
     if(-1 == status){
+        /*FIXME idk which one is right*/
+        perror(argv[0]);
         fprintf(stderr, "%s: command not found\n", argv[0]);
         exit(errno);
     } else{
@@ -38,13 +72,12 @@ int process(char *argv[]){
 }
 
 int main(int argc, char *argv[]){
-    int val,stage=0;
+    int val,stage=0, fd[40];
     char **pipes, **args;
     pid_t child;
     /*struct sigaction sa;
     struct itimerval timer;
     sigset_t mask;
-
     sigemptyset(&mask);
     sigaddset(&mask, SIGINT);
     sigprocmask(SIG_BLOCK,&mask,NULL);
@@ -56,20 +89,72 @@ int main(int argc, char *argv[]){
     while(1){
         pipes = pipeline();
         while(pipes[stage]){
-            args = parse_commands(pipes[stage++]);
-            if(!strcmp(args[0], "cd")){
-                val = chdir(args[1]);
+            /* find the output and input of each stage*/
+            if(stage == 0){
+                input = "stdin";
+                if(num_pipes > 0){
+                    output = "pipe to stage ";
+                }else{
+                    output = "stdout";
+                }
             } else {
-              val = process(args);
+                input = "pipe from stage ";
+                if(stage == num_pipes){
+                    output = "stdout";
+                }else{
+                    output = "pipe to stage ";
+                }
             }
-            if(val){
-                printf("failure\n");
-            } else{
-                printf("success\n");
+            args = parse_commands(pipes[stage]);
+            /*set up pipes*/
+            if(pipe(fd + stage * 2)){
+                perror("pipe");
+                exit(1);
             }
+            /*
+            add input and output redirection after pipes
+            //if input is from file
+            if(strcmp(input, "stdin")){
+                if(strncmp(input, "pipe from",9)){
+                    fd[2*stage] = open(input, O_RDONLY, 0644);
+                    if(fd[2*stage + 1] < 0){
+                        perror(input);
+                        break;
+                    }
+                }
+            }
+            //if output is to file
+            if(strcmp(output, "stdout")){
+                if(strncmp(output, "pipe to", 7)){
+                    fd[2*stage + 1] = open(output, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+                    if(fd[2*stage] < 0){
+                        perror(output);
+                        break;
+                    }
+                }
+            }
+            */
+            if(DEBUG){
+                printf("%s\n", input);
+                printf("%s\n", output);
+                printf("stage #%d\n", stage);
+            }
+            if(!strcmp(args[0], "cd")){
+                /*if command is cd, don't create child process*/
+                val = chdir(args[1]);
+                if(val==-1){
+                    perror(args[1]);
+                }
+            } else {
+                /*if not cd, create child process through forking*/
+                val = execute(args, fd, stage);
+            }
+            stage++;
         }
         free(args);
         stage = 0;
+        process(fd[0]);
+        /*close all pipes*/
     }
     
     return 0;

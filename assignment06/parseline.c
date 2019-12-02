@@ -1,18 +1,8 @@
-#include<string.h>
-#include<strings.h>
-#include<ctype.h>
-#include<stdio.h>
-#include<stdlib.h>
-#include<stdbool.h>
+#include "mush.h"
 
 #define CMD_LEN     1024
 #define PIPE_MAX    20
 #define MAX_ARGS    20
-
-char *output;
-char *input;
-int argc;
-int num_pipes = -1;
 
 char *strdup(const char *c)
 {
@@ -159,6 +149,7 @@ char **get_pipeline(char *cmd){
     char **pipe, *token;
     const char parse[2] = "|";
     int i = 0;
+    num_pipes = -1;
     pipe = calloc(PIPE_MAX, sizeof(char *));
 
     token = strtok(cmd, parse);

@@ -1,6 +1,6 @@
 CFLAGS = -g -ansi -pedantic
 
-all: mush parseline process
+all: mush parseline
 
 mush: mush.c
 	gcc mush.c -o mush $(CFLAGS)
@@ -8,8 +8,8 @@ mush: mush.c
 parseline: parseline.c
 	gcc parseline.c -c $(CFLAGS)
 
-process: process.c
-	gcc process.c -c $(CFLAGS)
+pipe: pipe.c
+	gcc pipe.c -o trying -g
 
 clean:
 	rm *.o mush

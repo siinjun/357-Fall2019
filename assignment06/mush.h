@@ -16,5 +16,8 @@
 #include <strings.h>
 #include <ctype.h>
 #include <errno.h>
-
+int num_pipes;
+char *output;
+char *input;
+int argc;
 #endif
