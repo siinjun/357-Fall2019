@@ -6,12 +6,12 @@ int DEBUG = false;
 
 void close_fd(int fd[], int stage){
     int i;
-    for(i = 0; i < stage; i++){
+    for(i = 0; i < stage + 1; i++){
         close(fd[2*i]);
         close(fd[2*i+1]);
     }
 }
-
+/*purpose of this???*/
 void process(int fd){
     int num;
     char buf[SIZE];
@@ -28,19 +28,22 @@ void process(int fd){
         exit(1);
     }
 }
+
 int execute(char *argv[], int fd[], int stage){
     pid_t child;
     int status;
+    int i;
 
     if((child = fork())){
         /*parent*/
+        /*close the write end of previous pipe*/
+        for(i = 0; i < stage; i++){
+            close(fd[(i*2) + 1]);
+        };
         if(-1 == wait(&status)){
             perror("wait");
             exit(1);
         }
-        /*
-        process(fd[2*stage]);
-        */
         if((WIFEXITED(status) && WEXITSTATUS(status)) || WIFSIGNALED(status)){
             return 1;
         } else{
@@ -48,17 +51,35 @@ int execute(char *argv[], int fd[], int stage){
         }
     }
     /*child*/
-    if(dup2(fd[stage*2 + 1], STDOUT_FILENO) < 0){
-        perror("dup2");
-        exit(1);
+    /*if at final stage, output to stdout or output file*/
+    if(stage == num_pipes){
+        if(strncmp(output, "stdout", 6)){
+        /*if output is not stdout, dup2 file to stdout*/
+            int out;
+            out = open(output, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+            if(dup2(out, STDOUT_FILENO) < 0){
+                perror("dup2");
+                exit(1);
+            }
+            close(out);
+        }
     }
-    if(stage > 0){
-        /*if in middle of pipeline, stdin is the read end of the previous pipe*/
-        if(dup2(fd[stage*1], STDIN_FILENO) < 0 ){
+    /* else manipulate stdout to pipe*/
+    else{
+        if(dup2(fd[stage*2 + 1], STDOUT_FILENO) < 0){
             perror("dup2");
             exit(1);
         }
     }
+    /*if in middle of pipeline, stdin is the read end of the previous pipe*/
+    if(stage > 0){
+        if(dup2(fd[stage*2 - 2], STDIN_FILENO) < 0 ){
+            perror("dup2");
+            exit(1);
+        }
+    }
+    /*close all fds, in child*/
+    close_fd(fd, stage);
     status = execvp(argv[0], argv);
 
     if(-1 == status){
@@ -111,29 +132,6 @@ int main(int argc, char *argv[]){
                 perror("pipe");
                 exit(1);
             }
-            /*
-            add input and output redirection after pipes
-            //if input is from file
-            if(strcmp(input, "stdin")){
-                if(strncmp(input, "pipe from",9)){
-                    fd[2*stage] = open(input, O_RDONLY, 0644);
-                    if(fd[2*stage + 1] < 0){
-                        perror(input);
-                        break;
-                    }
-                }
-            }
-            //if output is to file
-            if(strcmp(output, "stdout")){
-                if(strncmp(output, "pipe to", 7)){
-                    fd[2*stage + 1] = open(output, O_CREAT | O_TRUNC | O_WRONLY, 0644);
-                    if(fd[2*stage] < 0){
-                        perror(output);
-                        break;
-                    }
-                }
-            }
-            */
             if(DEBUG){
                 printf("%s\n", input);
                 printf("%s\n", output);
@@ -153,7 +151,7 @@ int main(int argc, char *argv[]){
         }
         free(args);
         stage = 0;
-        process(fd[0]);
+        /*process(fd[0]);*/
         /*close all pipes*/
     }
     

@@ -20,4 +20,11 @@ int num_pipes;
 char *output;
 char *input;
 int argc;
+
+struct pipestage{
+    int in;
+    int out;
+    char *args;
+
+};
 #endif

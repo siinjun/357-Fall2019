@@ -3,7 +3,6 @@ README
 mush
 mush.c
 mush.h
-new
 parseline.c
 parseline.o
 pipe.c
