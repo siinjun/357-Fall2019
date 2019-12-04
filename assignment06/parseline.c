@@ -19,9 +19,14 @@ char *get_commands(){
     int i;
 
     command_line = calloc(CMD_LEN, 1);
-    printf("$8-P ");
+    printf("8-P ");
     fgets(command_line, CMD_LEN, stdin);
-    if(command_line[0] == '\0'){
+    if(command_line[0] == '\n'){
+        free(command_line);
+        skip = true;
+        return NULL;
+    }    
+    if(command_line[0] == 0){
         free(command_line);
         printf("\n");
         exit(0);
@@ -43,18 +48,21 @@ void check_pipes(char *cmd){
             else if(cmd[i] == '|' && pipe == '|'){
                 /*pipe line error*/
                 fprintf(stderr, "invalid null command\n");
-                exit(1);
+                free(cmd);
+                skip = true;
+                return;
             }
             else{
                 pipe = cmd[i];
             }
         }
     }
-    /*
     if(cmd[len-1] == '|'){
         fprintf(stderr, "invalid null command\n");
+        skip = true;
+        free(cmd);
+        return;
     }
-    */
 }
 
 void check_inputs_redirection(char **pipeline){
@@ -66,7 +74,9 @@ void check_inputs_redirection(char **pipeline){
     for(;pipeline[i];i++){
         if(ambig_out){
             fprintf(stderr, "%s: ambiguous output\n", token);
-            exit(1);
+            skip = true;
+            free(tmp);
+            return;
         }
         inputs = 0;
         outputs = 0;
@@ -84,7 +94,9 @@ void check_inputs_redirection(char **pipeline){
             if(i > 0){
                 if(inputs > 0){
                     fprintf(stderr, "%s: ambiguous input\n", token);
-                    exit(1);
+                    skip = true;
+                    free(tmp);
+                    return;
                 }
             }
             if(outputs == 1){
@@ -92,14 +104,19 @@ void check_inputs_redirection(char **pipeline){
             }
             if(inputs > 1){
                 fprintf(stderr, "%s: bad input redirection\n", token);
-                exit(1);
+                skip = true;
+                free(tmp);
+                return;
             }
             if(outputs > 1){
                 fprintf(stderr, "%s: bad output redirection\n", token);
-                exit(1);
+                skip = true;
+                free(tmp);
+                return;
             }
         }
     }
+    free(tmp);
 }
 
 char **parse_commands(char *cmd){
@@ -162,60 +179,32 @@ char **get_pipeline(char *cmd){
         token = strtok(NULL, parse);
         if(i > PIPE_MAX){
             fprintf(stderr, "Too many args.\n");
-            exit(1);
+            skip = true;
+            return NULL;
         }
     }
     return pipe;
 }
 
 
-/*
-int other(){
-    char *cmd, *line, **pipeline, **arguments;
-    int stage = 0;
-
-    cmd = get_commands();
-    check_pipes(cmd);
-    pipeline = get_pipeline(cmd);
-    check_inputs_redirection(pipeline);
-    line = calloc(CMD_LEN, 1);
-
-    while(pipeline[stage]){
-        if(stage == 0){
-            input = "original stdin";
-            if(num_pipes > 0){
-                output = "pipe to stage ";
-            }else{
-                output = "original stdout";
-            }
-        } else {
-            input = "pipe from stage ";
-            if(stage == num_pipes){
-                output = "original stdout";
-            }else{
-                output = "pipe to stage ";
-            }
-        }
-        line = strcpy(line, pipeline[stage]);
-        arguments = parse_commands(pipeline[stage]);
-        format_stdout(arguments, line, stage++);
-        memset(line, 0, CMD_LEN);
-        free(arguments);
-    }
-    free(cmd);
-    free(pipeline);
-    free(line);
-    return 0;
-}
-*/
 char ** pipeline(){
-    char *cmd, *line, **pipeline;
+    char *cmd, **pipeline;
 
     cmd = get_commands();
+    if(cmd == NULL){
+        return NULL;
+    }
     check_pipes(cmd);
+    if(skip == true){
+        return NULL;
+    }
     pipeline = get_pipeline(cmd);
+    if(skip == true){
+        return NULL;
+    }
     check_inputs_redirection(pipeline);
-    line = calloc(CMD_LEN, 1);
-
+    if(skip == true){
+        return NULL;
+    }
     return pipeline;
 }

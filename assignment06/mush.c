@@ -14,7 +14,7 @@ void close_fd(int fd[], int stage){
         close(fd[2*i+1]);
     }
 }
-/*purpose of this???*/
+/*idk the purpose of this???*/
 void process(int fd){
     int num;
     char buf[SIZE];
@@ -112,50 +112,56 @@ int main(int argc, char *argv[]){
     */
     while(1){
         pipes = pipeline();
-        while(pipes[stage]){
-            /* find the output and input of each stage*/
-            if(stage == 0){
-                input = "stdin";
-                if(num_pipes > 0){
-                    output = "pipe to stage ";
-                }else{
-                    output = "stdout";
+        if(skip == false){
+            stage = 0;
+            while(pipes[stage]){
+                /* find the output and input of each stage*/
+                if(stage == 0){
+                    input = "stdin";
+                    if(num_pipes > 0){
+                        output = "pipe to stage ";
+                    }else{
+                        output = "stdout";
+                    }
+                } else {
+                    input = "pipe from stage ";
+                    if(stage == num_pipes){
+                        output = "stdout";
+                    }else{
+                        output = "pipe to stage ";
+                    }
                 }
-            } else {
-                input = "pipe from stage ";
-                if(stage == num_pipes){
-                    output = "stdout";
-                }else{
-                    output = "pipe to stage ";
+                args = parse_commands(pipes[stage]);
+                /*set up pipes*/
+                if(pipe(fd + stage * 2)){
+                    perror("pipe");
+                    exit(1);
                 }
-            }
-            args = parse_commands(pipes[stage]);
-            /*set up pipes*/
-            if(pipe(fd + stage * 2)){
-                perror("pipe");
-                exit(1);
-            }
-            if(DEBUG){
-                printf("%s\n", input);
-                printf("%s\n", output);
-                printf("stage #%d\n", stage);
-            }
-            if(!strcmp(args[0], "cd")){
-                /*if command is cd, don't create child process*/
-                val = chdir(args[1]);
-                if(val==-1){
-                    perror(args[1]);
+                if(DEBUG){
+                    printf("%s\n", input);
+                    printf("%s\n", output);
+                    printf("stage #%d\n", stage);
                 }
-            } else {
-                /*if not cd, create child process through forking*/
-                val = execute(args, fd, stage);
+                if(!strcmp(args[0], "cd")){
+                    /*if command is cd, don't create child process*/
+                    val = chdir(args[1]);
+                    if(val==-1){
+                        perror(args[1]);
+                    }
+                } else {
+                    /*if not cd, create child process through forking*/
+                    val = execute(args, fd, stage);
+                }
+                stage++;
             }
-            stage++;
+            free(args);
+            free(pipes);
+            /*close all pipes*/
         }
-        free(args);
-        stage = 0;
-        /*process(fd[0]);*/
-        /*close all pipes*/
+        else{
+            skip = false;
+        }
+
     }
     
     return 0;
