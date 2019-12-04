@@ -3,7 +3,10 @@
 #define SIZE 1024
 /*#include "process.c"*/
 int DEBUG = false;
-
+void handler(int num){
+    /*kill the process child but never the parent*/
+    pid_t child;
+}
 void close_fd(int fd[], int stage){
     int i;
     for(i = 0; i < stage + 1; i++){

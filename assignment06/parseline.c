@@ -149,13 +149,16 @@ char **get_pipeline(char *cmd){
     char **pipe, *token;
     const char parse[2] = "|";
     int i = 0;
+    const char *abc = "abcdefghijklmnopqrstuvwxyz";
     num_pipes = -1;
     pipe = calloc(PIPE_MAX, sizeof(char *));
 
     token = strtok(cmd, parse);
     while(token != NULL){
-        num_pipes++;
-        pipe[i++] = token;
+        if(strpbrk(token, abc) != NULL){
+            num_pipes++;
+            pipe[i++] = token;
+        }
         token = strtok(NULL, parse);
         if(i > PIPE_MAX){
             fprintf(stderr, "Too many args.\n");
