@@ -12,13 +12,15 @@ void handler(int num){
     printf("\n");
     execl("mush", "mush", NULL);
 }
-void close_fd(int fd[], int stage){
+void close_fd(int fd[], int stage, bool parent){
     int i;
     for(i = 0; i < stage + 1; i++){
         close(fd[2*i]);
-        close(fd[2*i+1]);
+        if(!parent)
+            close(fd[2*i+1]);
     }
 }
+
 /*idk the purpose of this???*/
 void process(int fd){
     int num;
@@ -87,12 +89,15 @@ int execute(char *argv[], int fd[], int stage){
         }
     }
     /*close all fds, in child*/
-    close_fd(fd, stage);
+    close_fd(fd, stage, false);
     status = execvp(argv[0], argv);
 
     if(-1 == status){
         /*FIXME idk which one is right*/
         perror(argv[0]);
+        free(cmd_line);
+        free(pline_pipeline);
+        free(pline_args);
         exit(errno);
     } else{
         exit(0);
@@ -123,7 +128,7 @@ int shell(){
                         output = "pipe to stage ";
                     }
                 }
-                args = parse_commands(pipes[stage]);
+                pline_args = parse_commands(pipes[stage]);
                 /*set up pipes*/
                 if(pipe(fd + stage * 2)){
                     perror("pipe");
@@ -134,21 +139,23 @@ int shell(){
                     printf("%s\n", output);
                     printf("stage #%d\n", stage);
                 }
-                if(!strcmp(args[0], "cd")){
+                if(!strcmp(pline_args[0], "cd")){
                     /*if command is cd, don't create child process*/
-                    val = chdir(args[1]);
+                    val = chdir(pline_args[1]);
                     if(val==-1){
-                        perror(args[1]);
+                        perror(pline_args[1]);
                     }
                 } else {
                     /*if not cd, create child process through forking*/
-                    val = execute(args, fd, stage);
+                    val = execute(pline_args, fd, stage);
                 }
                 stage++;
             }
-            free(args);
+            free(pline_args);
             free(pipes);
-            /*close all pipes*/
+            free(cmd_line);
+            /*close all read ends of pipes*/
+            close_fd(fd, stage-1, true);
         }
         else{
             skip = false;

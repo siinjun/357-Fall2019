@@ -1,6 +1,6 @@
 #include "mush.h"
 
-#define CMD_LEN     1024
+#define CMD_LEN     1025
 #define PIPE_MAX    20
 #define MAX_ARGS    20
 
@@ -18,22 +18,28 @@ char *get_commands(){
     char *command_line;
     int i;
 
-    command_line = calloc(CMD_LEN, 1);
+    cmd_line = calloc(CMD_LEN, 1);
     printf("8-P ");
-    fgets(command_line, CMD_LEN, stdin);
-    if(command_line[0] == '\n'){
-        free(command_line);
+    fgets(cmd_line, CMD_LEN, stdin);
+    if(cmd_line[0] == '\n'){
+        free(cmd_line);
         skip = true;
         return NULL;
     }    
-    if(command_line[0] == 0){
-        free(command_line);
+    if(cmd_line[0] == 0){
+        free(cmd_line);
         printf("\n");
         exit(0);
-    }    
-    i = strlen(command_line) - 1;
-    command_line[i] = '\0';
-    return command_line;
+    }
+    if(cmd_line[CMD_LEN -1] != 0){
+        fprintf(stderr, "command over 1024 bytes\n");
+        free(cmd_line);
+        skip = true;
+        return NULL;
+    }
+    i = strlen(cmd_line) - 1;
+    cmd_line[i] = '\0';
+    return cmd_line;
 }
 
 void check_pipes(char *cmd){
@@ -57,7 +63,7 @@ void check_pipes(char *cmd){
             }
         }
     }
-    if(cmd[len-1] == '|'){
+    if(pipe == '|'){
         fprintf(stderr, "invalid null command\n");
         skip = true;
         free(cmd);
@@ -75,12 +81,17 @@ void check_inputs_redirection(char **pipeline){
         if(ambig_out){
             fprintf(stderr, "%s: ambiguous output\n", token);
             skip = true;
+            free(cmd_line);
+            free(pipeline);
             free(tmp);
             return;
+        } else if(i>0 && !ambig_out){
+            free(tmp);
         }
         inputs = 0;
         outputs = 0;
         len = strlen(pipeline[i]);
+        /*create tmp so pipeline isn't affected*/
         tmp = calloc(len + 1, 1);
         tmp = strcpy(tmp, pipeline[i]);
         token = strtok(tmp, delim);
@@ -95,6 +106,8 @@ void check_inputs_redirection(char **pipeline){
                 if(inputs > 0){
                     fprintf(stderr, "%s: ambiguous input\n", token);
                     skip = true;
+                    free(cmd_line);
+                    free(pipeline);
                     free(tmp);
                     return;
                 }
@@ -105,12 +118,16 @@ void check_inputs_redirection(char **pipeline){
             if(inputs > 1){
                 fprintf(stderr, "%s: bad input redirection\n", token);
                 skip = true;
+                free(cmd_line);
+                free(pipeline);
                 free(tmp);
                 return;
             }
             if(outputs > 1){
                 fprintf(stderr, "%s: bad output redirection\n", token);
                 skip = true;
+                free(cmd_line);
+                free(pipeline);
                 free(tmp);
                 return;
             }
@@ -118,15 +135,20 @@ void check_inputs_redirection(char **pipeline){
         if(pipeline[i][j-1] == '<'){
             fprintf(stderr, "%s: bad input redirection\n", token);
             skip = true;
+            free(cmd_line);
+            free(pipeline);
             free(tmp);
             return;
         }
         if(pipeline[i][j-1] == '>'){
             fprintf(stderr, "%s: bad input redirection\n", token);
             skip = true;
+            free(cmd_line);
+            free(pipeline);
             free(tmp);
             return;        
-            }
+        }
+        /*free(tmp);*/
     }
     free(tmp);
 }
@@ -207,13 +229,13 @@ char ** pipeline(){
     if(skip == true){
         return NULL;
     }
-    pipeline = get_pipeline(cmd);
+    pline_pipeline = get_pipeline(cmd);
     if(skip == true){
         return NULL;
     }
-    check_inputs_redirection(pipeline);
+    check_inputs_redirection(pline_pipeline);
     if(skip == true){
         return NULL;
     }
-    return pipeline;
+    return pline_pipeline;
 }

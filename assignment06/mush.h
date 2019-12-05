@@ -19,6 +19,9 @@
 int num_pipes;
 char *output;
 char *input;
+char *cmd_line;
+char **pline_args;
+char **pline_pipeline;
 int argc;
 pid_t parent;
 bool skip;
