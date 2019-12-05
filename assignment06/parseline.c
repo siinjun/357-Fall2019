@@ -115,6 +115,18 @@ void check_inputs_redirection(char **pipeline){
                 return;
             }
         }
+        if(pipeline[i][j-1] == '<'){
+            fprintf(stderr, "%s: bad input redirection\n", token);
+            skip = true;
+            free(tmp);
+            return;
+        }
+        if(pipeline[i][j-1] == '>'){
+            fprintf(stderr, "%s: bad input redirection\n", token);
+            skip = true;
+            free(tmp);
+            return;        
+            }
     }
     free(tmp);
 }
@@ -166,16 +178,13 @@ char **get_pipeline(char *cmd){
     char **pipe, *token;
     const char parse[2] = "|";
     int i = 0;
-    const char *abc = "abcdefghijklmnopqrstuvwxyz";
     num_pipes = -1;
     pipe = calloc(PIPE_MAX, sizeof(char *));
 
     token = strtok(cmd, parse);
     while(token != NULL){
-        if(strpbrk(token, abc) != NULL){
-            num_pipes++;
-            pipe[i++] = token;
-        }
+        num_pipes++;
+        pipe[i++] = token;
         token = strtok(NULL, parse);
         if(i > PIPE_MAX){
             fprintf(stderr, "Too many args.\n");

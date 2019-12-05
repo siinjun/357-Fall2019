@@ -1,4 +1,4 @@
-CFLAGS = -g -ansi -pedantic
+CFLAGS = -g -pedantic
 
 all: mush parseline
 

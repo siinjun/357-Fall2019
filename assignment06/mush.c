@@ -3,9 +3,14 @@
 #define SIZE 1024
 /*#include "process.c"*/
 int DEBUG = false;
+
+int shell();
+
 void handler(int num){
     /*kill the process child but never the parent*/
     pid_t child;
+    printf("\n");
+    execl("mush", "mush", NULL);
 }
 void close_fd(int fd[], int stage){
     int i;
@@ -88,28 +93,15 @@ int execute(char *argv[], int fd[], int stage){
     if(-1 == status){
         /*FIXME idk which one is right*/
         perror(argv[0]);
-        fprintf(stderr, "%s: command not found\n", argv[0]);
         exit(errno);
     } else{
         exit(0);
     }
 }
 
-int main(int argc, char *argv[]){
+int shell(){
     int val,stage=0, fd[40];
     char **pipes, **args;
-    pid_t child;
-    /*struct sigaction sa;
-    struct itimerval timer;
-    sigset_t mask;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGINT);
-    sigprocmask(SIG_BLOCK,&mask,NULL);
-    sa.sa_handler = handler;
-    sigemptyset(&sa.sa_mask);
-    sa.sa_flags = 0;
-    sigaction(SIGALRM,&sa,NULL);
-    */
     while(1){
         pipes = pipeline();
         if(skip == false){
@@ -161,8 +153,29 @@ int main(int argc, char *argv[]){
         else{
             skip = false;
         }
-
     }
-    
+    return 0;
+}
+
+int main(int argc, char *argv[]){
+
+    pid_t child, parent;
+
+    struct sigaction sa;
+    struct itimerval timer;
+    /*set up signal handler*/
+    sigset_t mask;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGINT);
+    sigprocmask(SIG_BLOCK,&mask,NULL);
+    sa.sa_handler = handler;
+    sigemptyset(&sa.sa_mask);
+    sa.sa_flags = 0;
+    sigaction(SIGINT,&sa,NULL);
+    sigprocmask(SIG_UNBLOCK, &mask, NULL);
+
+    /*get the parent's id, for signal handling?*/
+    parent = getpid();
+    shell();
     return 0;
 }

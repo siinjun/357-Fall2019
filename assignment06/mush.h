@@ -20,6 +20,7 @@ int num_pipes;
 char *output;
 char *input;
 int argc;
+pid_t parent;
 bool skip;
 
 struct pipestage{

@@ -5,6 +5,7 @@ mush
 mush.c
 mush.h
 nicomush
+out
 parseline.c
 parseline.o
 pipe.c
