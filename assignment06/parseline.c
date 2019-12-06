@@ -16,9 +16,10 @@ char *strdup(const char *c)
 
 char *get_commands(){
     int i, check;
-    char * val;
-    cmd_line = calloc(CMD_LEN, 1);
 
+    cmd_line = calloc(CMD_LEN, 1);
+    /*printf("8-P ");*/
+    fflush(stdin);
     if(write_prompt){
         check = write(STDOUT_FILENO, "8-P ", PROMPT);
         if(check < 0){
@@ -30,17 +31,11 @@ char *get_commands(){
     if(!write_prompt){
         strcpy(cmd_line, scriptfile);
     }else{
-        fflush(stdin);
-        val = fgets(cmd_line, CMD_LEN, stdin);
-        if(val == NULL){
-            perror("fgets");
-            exit(1);
-        }
-        /*check = read(STDIN_FILENO, cmd_line, CMD_LEN);
+        check = read(STDIN_FILENO, cmd_line, CMD_LEN);
         if(check < 0){
             perror("read");
             exit(errno);
-        }*/
+        }
     }
     
     /*fgets(cmd_line, CMD_LEN, stdin);*/
