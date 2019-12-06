@@ -18,6 +18,7 @@
 #include <errno.h>
 #include <setjmp.h>
 int num_pipes;
+FILE* scp_fd;/*scriptfile file pointer*/
 char *output;
 char *input;
 char *cmd_line;

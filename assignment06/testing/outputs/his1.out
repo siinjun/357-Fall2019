@@ -1,0 +1,259 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                    }
+                    }
+                    }
+                    }
+                    }
+                }
+                }
+                }
+                }
+            }
+            }
+            }
+            }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+        }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+    }
+}
+}
+}
+}
+}
+}
+                        break;
+    char **pipes, **args;
+    /*child*/
+    child = getpid();
+    child = getpid();
+    child = getpid();
+    /*close all fds, in child*/
+                /*close all read ends of pipes*/
+        close(fd);
+        close(fd[2*i]);
+            close(fd[2*i+1]);
+                close_fd(fd, stage-1, true);
+    close_fd(fd, stage, false);
+                        close_fd(fd, stage, true);
+            close(fd[(i*2) + 1]);
+        close(file);
+            close(out);
+        /*close the write end of previous pipe*/
+#define MAX_FD 20
+#define SIZE 1024
+                    }else{
+                    }else{
+                } else {
+                } else{
+        } else{
+        else{
+    } else{
+    else{
+    } else if(argc == 2){
+        else if(size > SIZE){
+        else if (skip = true && !write_prompt){
+    /* else manipulate stdout to pipe*/
+    execl("mush", "mush", NULL);
+    execl("mush", "mush", NULL);
+                exit(0);
+        exit(0);
+        exit(0);
+                    exit(1);
+                exit(1);
+            exit(1);
+            exit(1);
+            exit(1);
+            exit(1);
+            exit(1);
+            exit(1);
+            exit(1);
+            exit(1);
+            exit(errno);
+            exit(errno);
+            exit(errno);
+        exit(errno);
+        fd = open(argv[1], O_CREAT, O_TRUNC, O_WRONLY, 0644);
+        file = open(input, O_RDONLY, 0644);
+                /* find the output and input of each stage*/
+    for(i = 0; i < stage + 1; i++){
+        for(i = 0; i < stage; i++){
+            fprintf(stderr, "command over 1024\n");
+        fprintf(stderr, "usage: %s [ scriptfile ]\n", argv[0]);
+                        free(cmd_line);
+                free(cmd_line);
+        free(cmd_line);
+                        free(pipes);
+                free(pipes);
+                        free(pline_args);
+                    free(pline_args);
+                free(pline_args);
+        free(pline_args);
+                /*free pline args if stage is over 1*/
+        free(pline_pipeline);
+                free(scriptfile);
+            free(scriptfile);
+    /*get the parent's id, for signal handling?*/
+    if(-1 == status){
+        if(-1 == wait(&status)){
+    if(argc == 1){
+    if(argc > 2){
+    /*if at final stage, output to stdout or output file*/
+    if((child = fork())){
+                    /*if command is cd, don't create child process*/
+                    if(DEBUG){
+        if(dup2(fd[stage*2 + 1], STDOUT_FILENO) < 0){
+        if(dup2(fd[stage*2 - 2], STDIN_FILENO) < 0 ){
+        if(dup2(file, STDIN_FILENO) < 0){
+            if(dup2(out, STDOUT_FILENO) < 0){
+        if(fd == -1){
+        if(file < 0){
+            /*if finished from scriptfile, exit prog*/
+    /*if in middle of pipeline, stdin is the read end of the previous pipe*/
+    /*if input is redirected to file*/
+                    /*if not cd, create child process through forking*/
+                    if(num_pipes > 0){
+        if(oth < 0){
+        if(oth < 0){
+        /*if output is not stdout, dup2 file to stdout*/
+        if(!parent)
+                if(pipe(fd + stage * 2)){
+            /*if process succeeded, free and close everything*/
+        if(size < 0){
+        if(skip == false){
+                if(stage == 0){
+                if(stage > 0){
+    if(stage > 0){
+    if(stage == 0 && strncmp(input, "stdin", 5)){
+                    if(stage == num_pipes){
+    if(stage == num_pipes){
+                if(!strcmp(pline_args[0], "cd")){
+        if(strncmp(output, "stdout", 6)){
+                    if(val != 0){
+            if(val==0){
+                    if(val==-1){
+        if((WIFEXITED(status) && WEXITSTATUS(status)) || WIFSIGNALED(status)){
+            if(!write_prompt){
+#include "mush.h"
+#include "parseline.c"
+                    input = "pipe from stage ";
+                    input = "stdin";
+int DEBUG = false;
+int execute(char *argv[], int fd[], int stage){
+        int fd, size, oth;
+        int file;
+    int i;
+    int i;
+int main(int argc, char *argv[]){
+            int out;
+int shell(){
+    int status;
+    int val, stage=0, fd[MAX_FD];
+                        /*kill call sent so restart cmd line*/
+    /*kill the process child but never the parent*/
+    /*kill the process child but never the parent*/
+/*need to work on this*/
+        oth = lseek(fd, 0, SEEK_SET);
+        oth = read(fd, scriptfile, size);
+            out = open(output, O_CREAT | O_TRUNC | O_WRONLY, 0644);
+                        output = "pipe to stage ";
+                        output = "pipe to stage ";
+                        output = "stdout";
+                        output = "stdout";
+        /*parent*/
+    parent_id = getpid();
+        perror(argv[0]);
+                perror("dup2");
+            perror("dup2");
+            perror("dup2");
+            perror("dup2");
+            perror("lseek");
+            perror("lseek");
+            perror("open");
+            perror("open");
+                    perror("pipe");
+                        perror(pline_args[1]);
+            perror("read");
+            perror("wait");
+    pid_t child;
+    pid_t child;
+    pid_t child;
+    pid_t child;
+        pipes = pipeline();
+                pline_args = parse_commands(pipes[stage]);
+                        printf("exit status of %s: %d\n", pline_args[0], val);
+    printf("\n");
+    printf("this is the child id in handler %d\n", child);
+            return 0;
+    return 0;
+    return 0;
+            return 1;
+    sa.sa_flags = 0;
+    sa.sa_handler = handler;
+        scriptfile = calloc(size+1, 1);
+                /*set up pipes*/
+    /*set up signal handler*/
+        shell();
+        shell();
+    sigaction(SIGINT,&sa,NULL);
+    sigaddset(&mask, SIGINT);
+    sigemptyset(&mask);
+    sigemptyset(&sa.sa_mask);
+    sigprocmask(SIG_BLOCK,&mask,NULL);
+    sigprocmask(SIG_UNBLOCK, &mask, NULL);
+    sigset_t mask;
+        size = lseek(fd, 0, SEEK_END);
+            skip = false;
+                stage++;
+            stage = 0;
+    status = execvp(argv[0], argv);
+struct sigaction sa;
+            val = 0;
+                    val = chdir(pline_args[1]);
+                    val = execute(pline_args, fd, stage);
+void child_handler(int num){
+void close_fd(int fd[], int stage, bool parent){
+void handler(int num){
+    while(1){
+            while(pipes[stage]){
+        write_prompt = false;
+        write_prompt = true;

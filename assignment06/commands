@@ -1,1 +1,2 @@
-ls | sort
+/bin/echo -n Hello,
+echo world

@@ -18,8 +18,7 @@ char *get_commands(){
     int i, check;
 
     cmd_line = calloc(CMD_LEN, 1);
-    /*printf("8-P ");*/
-    fflush(stdin);
+
     if(write_prompt){
         check = write(STDERR_FILENO, "8-P ", PROMPT);
         if(check < 0){
@@ -29,7 +28,18 @@ char *get_commands(){
     }
     /*if reading from scriptfile, read from scriptfile pointer*/
     if(!write_prompt){
-        strcpy(cmd_line, scriptfile);
+        cmd_line = fgets(cmd_line, CMD_LEN, scp_fd);
+        if(cmd_line == NULL){
+            free(cmd_line);
+            fclose(scp_fd);
+            if(errno != 0){
+                perror("fgets");
+                exit(errno);
+            } else {
+                exit(0);
+            }
+        }
+    /*reading from stdin*/
     }else{
         check = read(STDIN_FILENO, cmd_line, CMD_LEN);
         if(check < 0){
@@ -37,8 +47,6 @@ char *get_commands(){
             exit(errno);
         }
     }
-    
-    /*fgets(cmd_line, CMD_LEN, stdin);*/
     if(cmd_line[0] == '\n'){
         free(cmd_line);
         skip = true;
@@ -57,6 +65,7 @@ char *get_commands(){
         skip = true;
         return NULL;
     }
+    /*replace last char with null*/
     i = strlen(cmd_line) - 1;
     cmd_line[i] = '\0';
     return cmd_line;
@@ -196,7 +205,7 @@ char **parse_commands(char *cmd){
             else{
                 args[pline_argc++] = token;
                 if(pline_argc > MAX_ARGS){
-                    fprintf(stderr, "%s: too many args\n", prog);
+                    fprintf(stderr, "Too many arguments.\n", prog);
                     exit(1);
                 }
             }
@@ -228,7 +237,7 @@ char **get_pipeline(char *cmd){
         pipe[i++] = token;
         token = strtok(NULL, parse);
         if(i > PIPE_MAX){
-            fprintf(stderr, "Too many args.\n");
+            fprintf(stderr, "Pipeline too deep\n");
             skip = true;
             return NULL;
         }
