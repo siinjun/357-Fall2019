@@ -16,6 +16,7 @@
 #include <strings.h>
 #include <ctype.h>
 #include <errno.h>
+#include <setjmp.h>
 int num_pipes;
 char *output;
 char *input;

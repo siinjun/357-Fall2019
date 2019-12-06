@@ -3,7 +3,7 @@
 #define CMD_LEN     1025
 #define PIPE_MAX    20
 #define MAX_ARGS    20
-
+#define PROMPT      4
 char *strdup(const char *c)
 {
     char *dup = calloc(strlen(c) + 1, 1);
@@ -16,11 +16,22 @@ char *strdup(const char *c)
 
 char *get_commands(){
     char *command_line;
-    int i;
+    int i, check;
 
     cmd_line = calloc(CMD_LEN, 1);
-    printf("8-P ");
-    fgets(cmd_line, CMD_LEN, stdin);
+    /*printf("8-P ");
+    fflush(stdin);*/
+    check = write(STDOUT_FILENO, "8-P ", PROMPT);
+    if(check < 0){
+        perror("write");
+        exit(errno);
+    }
+    check = read(STDIN_FILENO, cmd_line, CMD_LEN);
+    if(check < 0){
+        perror("read");
+        exit(errno);
+    }
+    /*fgets(cmd_line, CMD_LEN, stdin);*/
     if(cmd_line[0] == '\n'){
         free(cmd_line);
         skip = true;
@@ -148,7 +159,6 @@ void check_inputs_redirection(char **pipeline){
             free(tmp);
             return;        
         }
-        /*free(tmp);*/
     }
     free(tmp);
 }

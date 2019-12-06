@@ -1,16 +1,22 @@
 #include "mush.h"
 #include "parseline.c"
 #define SIZE 1024
-/*#include "process.c"*/
+#define MAX_FD 20
 int DEBUG = false;
-
-int shell();
-
+jmp_buf jump_buffer;
+/*need to work on this*/
 void handler(int num){
     /*kill the process child but never the parent*/
     pid_t child;
-    printf("\n");
+    child = getpid();
+
+    if(child == parent){
+        printf("this is the parent\n");
+    } else{
+        printf("this is the child\n");
+    }
     execl("mush", "mush", NULL);
+
 }
 void close_fd(int fd[], int stage, bool parent){
     int i;
@@ -18,24 +24,6 @@ void close_fd(int fd[], int stage, bool parent){
         close(fd[2*i]);
         if(!parent)
             close(fd[2*i+1]);
-    }
-}
-
-/*idk the purpose of this???*/
-void process(int fd){
-    int num;
-    char buf[SIZE];
-
-    memset(buf, 0, SIZE);
-    while((num=read(fd,buf,SIZE)) > 0){
-        if(write(STDOUT_FILENO, buf, num) < 0){
-            perror("write");
-            exit(1);
-        }
-    }
-    if(num < 0){
-        perror("read");
-        exit(1);
     }
 }
 
@@ -105,12 +93,16 @@ int execute(char *argv[], int fd[], int stage){
 }
 
 int shell(){
-    int val,stage=0, fd[40];
+    int val, stage=0, fd[MAX_FD];
     char **pipes, **args;
+
+    /*get the parent's id, for signal handling?*/
+    parent = getpid();
     while(1){
         pipes = pipeline();
         if(skip == false){
             stage = 0;
+            val = 0;
             while(pipes[stage]){
                 /* find the output and input of each stage*/
                 if(stage == 0){
@@ -134,11 +126,6 @@ int shell(){
                     perror("pipe");
                     exit(1);
                 }
-                if(DEBUG){
-                    printf("%s\n", input);
-                    printf("%s\n", output);
-                    printf("stage #%d\n", stage);
-                }
                 if(!strcmp(pline_args[0], "cd")){
                     /*if command is cd, don't create child process*/
                     val = chdir(pline_args[1]);
@@ -148,14 +135,29 @@ int shell(){
                 } else {
                     /*if not cd, create child process through forking*/
                     val = execute(pline_args, fd, stage);
+                    if(val != 0){
+                        /*kill call sent so restart cmd line*/
+                        free(pline_args);
+                        free(pipes);
+                        free(cmd_line);
+                        close_fd(fd, stage, true);
+                        break;
+                    }
+                    if(DEBUG){
+                        printf("exit status of %s: %d\n", pline_args[0], val);
+                    }
                 }
                 stage++;
             }
-            free(pline_args);
-            free(pipes);
-            free(cmd_line);
-            /*close all read ends of pipes*/
-            close_fd(fd, stage-1, true);
+            /*if process succeeded, free and close everything*/
+            if(val==0){
+                free(pline_args);
+                free(pipes);
+                free(cmd_line);
+                /*close all read ends of pipes*/
+                close_fd(fd, stage-1, true);
+            }
+
         }
         else{
             skip = false;
@@ -180,9 +182,22 @@ int main(int argc, char *argv[]){
     sa.sa_flags = 0;
     sigaction(SIGINT,&sa,NULL);
     sigprocmask(SIG_UNBLOCK, &mask, NULL);
+    if(argc == 1){
+        shell();
+    } else if(argc == 2){
+        int fd;
+        fd = open(argv[1], O_CREAT, O_TRUNC, O_WRONLY, 0644);
+        if(fd == -1){
+            perror("open");
+            exit(1);
+        }
+        if(dup2(fd, STDIN_FILENO)<0){
+            perror("dup2");
+            exit(1);
+        }
+        close(fd);
+        shell();
+    }
 
-    /*get the parent's id, for signal handling?*/
-    parent = getpid();
-    shell();
     return 0;
 }
