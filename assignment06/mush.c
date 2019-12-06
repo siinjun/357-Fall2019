@@ -43,7 +43,7 @@ int execute(char *argv[], int fd[], int stage){
         /*close the write end of previous pipe*/
         for(i = 0; i < stage; i++){
             close(fd[(i*2) + 1]);
-        };
+        }
         if(-1 == wait(&status)){
             perror("wait");
             exit(1);
@@ -200,13 +200,13 @@ int shell(){
 int main(int argc, char *argv[]){
 
     pid_t child;
+    sigset_t mask;
 
     /*set up signal handler*/
     if(argc > 2){
         fprintf(stderr, "usage: %s [ scriptfile ]\n", argv[0]);
         exit(0);
     }
-    sigset_t mask;
     sigemptyset(&mask);
     sigaddset(&mask, SIGINT);
     sigprocmask(SIG_BLOCK,&mask,NULL);

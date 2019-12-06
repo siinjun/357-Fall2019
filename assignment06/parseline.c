@@ -21,7 +21,7 @@ char *get_commands(){
     /*printf("8-P ");*/
     fflush(stdin);
     if(write_prompt){
-        check = write(STDOUT_FILENO, "8-P ", PROMPT);
+        check = write(STDERR_FILENO, "8-P ", PROMPT);
         if(check < 0){
             perror("write");
             exit(errno);

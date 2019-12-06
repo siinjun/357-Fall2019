@@ -1,0 +1,5 @@
+Sinjun Jang (srjang)
+n/a
+i have a weird thing where control d from stdin of a prog, such as cat, carries
+over to the next prompt of the command line and ends the program
+
