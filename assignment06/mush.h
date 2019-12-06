@@ -21,9 +21,11 @@ int num_pipes;
 char *output;
 char *input;
 char *cmd_line;
+char *scriptfile;
 char **pline_args;
 char **pline_pipeline;
-int argc;
+int pline_argc;
+bool write_prompt;
 pid_t parent;
 bool skip;
 

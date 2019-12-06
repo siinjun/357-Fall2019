@@ -21,16 +21,24 @@ char *get_commands(){
     cmd_line = calloc(CMD_LEN, 1);
     /*printf("8-P ");
     fflush(stdin);*/
-    check = write(STDOUT_FILENO, "8-P ", PROMPT);
-    if(check < 0){
-        perror("write");
-        exit(errno);
+    if(write_prompt){
+        check = write(STDOUT_FILENO, "8-P ", PROMPT);
+        if(check < 0){
+            perror("write");
+            exit(errno);
+        }
     }
-    check = read(STDIN_FILENO, cmd_line, CMD_LEN);
-    if(check < 0){
-        perror("read");
-        exit(errno);
+    /*if reading from scriptfile, read from scriptfile pointer*/
+    if(!write_prompt){
+        strcpy(cmd_line, scriptfile);
+    }else{
+        check = read(STDIN_FILENO, cmd_line, CMD_LEN);
+        if(check < 0){
+            perror("read");
+            exit(errno);
+        }
     }
+    
     /*fgets(cmd_line, CMD_LEN, stdin);*/
     if(cmd_line[0] == '\n'){
         free(cmd_line);
@@ -39,7 +47,9 @@ char *get_commands(){
     }    
     if(cmd_line[0] == 0){
         free(cmd_line);
-        printf("\n");
+        if(write_prompt){
+            printf("\n");
+        }
         exit(0);
     }
     if(cmd_line[CMD_LEN -1] != 0){
@@ -169,7 +179,7 @@ char **parse_commands(char *cmd){
     char *token, *prog;
     bool set_in = false, set_out = false;
 
-    argc=0;
+    pline_argc=0;
     args = calloc(MAX_ARGS, sizeof(char *));
     token = strtok(cmd, parse);
     prog = strdup(token);
@@ -185,8 +195,8 @@ char **parse_commands(char *cmd){
                 output = token;
             }
             else{
-                args[argc++] = token;
-                if(argc > MAX_ARGS){
+                args[pline_argc++] = token;
+                if(pline_argc > MAX_ARGS){
                     fprintf(stderr, "%s: too many args\n", prog);
                     exit(1);
                 }
