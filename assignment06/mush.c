@@ -2,21 +2,27 @@
 #include "parseline.c"
 #define SIZE 1024
 #define MAX_FD 20
+
 int DEBUG = false;
-jmp_buf jump_buffer;
+struct sigaction sa;
+
 /*need to work on this*/
 void handler(int num){
     /*kill the process child but never the parent*/
     pid_t child;
     child = getpid();
-
-    if(child == parent){
-        printf("this is the parent\n");
-    } else{
-        printf("this is the child\n");
-    }
+    printf("\n");
     execl("mush", "mush", NULL);
+}
 
+void child_handler(int num){
+    /*kill the process child but never the parent*/
+    pid_t child;
+    child = getpid();
+
+    printf("this is the child id in handler %d\n", child);
+
+    execl("mush", "mush", NULL);
 }
 void close_fd(int fd[], int stage, bool parent){
     int i;
@@ -50,6 +56,8 @@ int execute(char *argv[], int fd[], int stage){
     }
     /*child*/
     /*if at final stage, output to stdout or output file*/
+    child = getpid();
+
     if(stage == num_pipes){
         if(strncmp(output, "stdout", 6)){
         /*if output is not stdout, dup2 file to stdout*/
@@ -110,8 +118,9 @@ int shell(){
     char **pipes, **args;
 
     /*get the parent's id, for signal handling?*/
-    parent = getpid();
+    parent_id = getpid();
     while(1){
+
         pipes = pipeline();
         if(skip == false){
             stage = 0;
@@ -190,10 +199,8 @@ int shell(){
 
 int main(int argc, char *argv[]){
 
-    pid_t child, parent;
+    pid_t child;
 
-    struct sigaction sa;
-    struct itimerval timer;
     /*set up signal handler*/
     if(argc > 2){
         fprintf(stderr, "usage: %s [ scriptfile ]\n", argv[0]);

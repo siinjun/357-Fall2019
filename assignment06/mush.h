@@ -26,7 +26,7 @@ char **pline_args;
 char **pline_pipeline;
 int pline_argc;
 bool write_prompt;
-pid_t parent;
+pid_t parent_id;
 bool skip;
 
 struct pipestage{
